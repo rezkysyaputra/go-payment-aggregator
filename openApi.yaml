@@ -1,0 +1,118 @@
+openapi: 3.1.0
+info:
+  title: Go Payment Aggregator API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+
+paths:
+
+  /merchant/register:
+    post:
+      summary: Register merchant & generate API Key
+      tags: [Merchant]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                callback_url:
+                  type: string
+              required: [name, callback_url]
+      responses:
+        "201":
+          description: Merchant registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  merchant_id: { type: string }
+                  api_key: { type: string }
+
+  /transaction:
+    post:
+      summary: Create Transaction
+      tags: [Transaction]
+      parameters:
+        - in: header
+          name: x-api-key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id: { type: string }
+                amount: { type: integer }
+                provider:
+                  type: string
+                  enum: [midtrans]
+              required: [order_id, amount, provider]
+      responses:
+        "201":
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_id: { type: string }
+                  redirect_url: { type: string }
+                  status: { type: string }
+
+  /transaction/{id}:
+    get:
+      summary: Get transaction detail
+      tags: [Transaction]
+      parameters:
+        - in: header
+          name: x-api-key
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transaction detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_id: { type: string }
+                  merchant_id: { type: string }
+                  order_id: { type: string }
+                  provider: { type: string }
+                  amount: { type: integer }
+                  status: { type: string }
+                  external_ref: { type: string }
+                  raw_response:
+                    type: object
+
+  /webhook/midtrans:
+    post:
+      summary: Webhook receiver from Midtrans
+      tags: [Webhook]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Raw midtrans payload
+      responses:
+        "200":
+          description: OK
