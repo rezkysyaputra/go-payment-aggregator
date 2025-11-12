@@ -31,3 +31,5 @@ func InitDB() (*gorm.DB, error) {
 	}
 	return db, nil
 }
+
+// migrate -path migrations -database "postgres://postgres:postgres@localhost:5432/payment_aggregator?sslmode=disable" up

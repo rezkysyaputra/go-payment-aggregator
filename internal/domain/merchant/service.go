@@ -8,15 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type Merchant struct {
-	ID          uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
-	Name        string
-	ApiKey      string
-	CallbackURL string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-}
-
 type MerchantService interface {
 	Create(ctx context.Context, name, callbackURL string) (*Merchant, error)
 	FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error)
