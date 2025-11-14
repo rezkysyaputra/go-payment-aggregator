@@ -10,7 +10,6 @@ import (
 
 type MerchantService interface {
 	Create(ctx context.Context, name, callbackURL string) (*Merchant, error)
-	FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 }
 
 type MerchantServiceImpl struct {
@@ -48,8 +47,4 @@ func (s *MerchantServiceImpl) Create(ctx context.Context, name, callbackURL stri
 	}
 
 	return merchant, nil
-}
-
-func (s *MerchantServiceImpl) FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error) {
-	return s.MerchantRepository.FindByApiKey(ctx, apiKey)
 }
