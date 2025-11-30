@@ -6,7 +6,6 @@ servers:
   - url: https://api.example.com/v1
 
 paths:
-
   /merchant/register:
     post:
       summary: Register merchant & generate API Key
@@ -29,10 +28,23 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  merchant_id: { type: string }
-                  api_key: { type: string }
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            merchant_id: { type: string }
+                            api_key: { type: string }
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /transaction:
     post:
@@ -63,11 +75,24 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  transaction_id: { type: string }
-                  redirect_url: { type: string }
-                  status: { type: string }
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            transaction_id: { type: string }
+                            redirect_url: { type: string }
+                            status: { type: string }
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /transaction/{id}:
     get:
@@ -90,17 +115,30 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  transaction_id: { type: string }
-                  merchant_id: { type: string }
-                  order_id: { type: string }
-                  provider: { type: string }
-                  amount: { type: integer }
-                  status: { type: string }
-                  external_ref: { type: string }
-                  raw_response:
-                    type: object
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            transaction_id: { type: string }
+                            merchant_id: { type: string }
+                            order_id: { type: string }
+                            provider: { type: string }
+                            amount: { type: integer }
+                            status: { type: string }
+                            external_ref: { type: string }
+                            raw_response:
+                              type: object
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /webhook/midtrans:
     post:
@@ -116,3 +154,56 @@ paths:
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object # Or whatever the webhook response data structure is
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          description: Indicates if the request was successful
+          example: true
+        message:
+          type: string
+          description: A human-readable message
+          example: Operation completed successfully
+        data:
+          type: array
+          description: The payload of the successful response, typically an array of items or a single item wrapped in an array.
+          items: {} # Can be refined per endpoint to specify the type of items in the array
+      required:
+        - status
+        - message
+        - data
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: boolean
+          description: Indicates if the request was successful
+          example: false
+        error:
+          type: string
+          description: A human-readable error message
+          example: Invalid input provided
+      required:
+        - status
+        - error
