@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"go-payment-aggregator/internal/domain/merchant"
+	"go-payment-aggregator/internal/helper"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,17 +27,17 @@ type registerMerchantRequest struct {
 func (h *MerchantHandler) Register(c *gin.Context) {
 	var req registerMerchantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		helper.ErrorResponse(c, http.StatusBadRequest, false, err.Error())
 		return
 	}
 
 	m, err := h.service.Create(context.Background(), req.Name, req.CallbackURL)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create merchant"})
+		helper.ErrorResponse(c, http.StatusInternalServerError, false, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	helper.SuccessResponse(c, http.StatusOK, true, "merchant created", gin.H{
 		"merchant_id": m.ID,
 		"api_key":     m.ApiKey,
 	})

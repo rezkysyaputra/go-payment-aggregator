@@ -3,6 +3,7 @@ package handler
 import (
 	"go-payment-aggregator/internal/domain/merchant"
 	"go-payment-aggregator/internal/domain/transaction"
+	"go-payment-aggregator/internal/helper"
 	"log"
 	"net/http"
 
@@ -30,7 +31,7 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 	// bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Printf("Error binding JSON: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		helper.ErrorResponse(c, http.StatusBadRequest, false, err.Error())
 		return
 	}
 
@@ -40,11 +41,11 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 	t, err := h.service.CreateTransaction(m.ID, req.OrderID, req.Amount, req.Provider)
 	if err != nil {
 		log.Printf("Error creating transaction: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create transaction"})
+		helper.ErrorResponse(c, http.StatusInternalServerError, false, "failed to create transaction")
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	helper.SuccessResponse(c, http.StatusCreated, true, "transaction created", gin.H{
 		"transaction_id": t.ID,
 		"redirect_url":   t.RedirectURL,
 		"status":         t.Status,
