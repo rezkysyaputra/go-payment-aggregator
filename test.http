@@ -1,0 +1,18 @@
+### register merchant
+POST http://localhost:8080/v1/merchant/register
+Content-Type: application/json
+
+{
+  "name": "Test Merchant",
+//  "callback_url": "https://example.com/callback"
+}
+
+### create transaction
+POST http://localhost:8080/v1/transaction/create
+Content-Type: application/json
+X-API-KEY: mch_GBbFVBVjKy9gaPTLMYJ2kamGyiW5mhfG3bIm17+0
+{
+  "order_id": "ORDER12345",
+  "amount": 100000,
+  "provider": "midtrans"
+}

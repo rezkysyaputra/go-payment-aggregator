@@ -21,15 +21,14 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
-	viper.AddConfigPath(".")
-	viper.SetConfigName("env")
-	viper.SetConfigType("env")
+	viper := viper.New()
+	viper.SetConfigFile(".env")
 
 	// read config
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("warning: no .env file found (using system env vars)", err)
+		log.Print("warning: no .env file found (using system env vars)")
 	}
 
 	var cfg Config

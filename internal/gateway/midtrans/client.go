@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
-
-	"github.com/spf13/viper"
 )
 
 type SnapRequest struct {
@@ -23,9 +22,9 @@ type SnapResponse struct {
 	RedirectURL string `json:"redirect_url"`
 }
 
-func CreateTransaction(orderID string, amount float64) (*SnapResponse, error) {
-	serverKey := viper.GetString("MIDTRANS_SERVER_KEY")
+func CreateTransaction(serverKey string, orderID string, amount float64) (*SnapResponse, error) {
 	if serverKey == "" {
+		log.Println("Midtrans server key is not configured")
 		return nil, fmt.Errorf("midtrans server key is not configured")
 	}
 
@@ -36,11 +35,13 @@ func CreateTransaction(orderID string, amount float64) (*SnapResponse, error) {
 
 	jsonData, err := json.Marshal(body)
 	if err != nil {
+		log.Printf("Error marshaling JSON: %v", err)
 		return nil, err
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
+		log.Printf("Error creating HTTP request: %v", err)
 		return nil, err
 	}
 
@@ -50,6 +51,7 @@ func CreateTransaction(orderID string, amount float64) (*SnapResponse, error) {
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
+		log.Printf("Error making HTTP request to Midtrans: %v", err)
 		return nil, err
 	}
 
@@ -57,6 +59,7 @@ func CreateTransaction(orderID string, amount float64) (*SnapResponse, error) {
 
 	var snapRes SnapResponse
 	if err := json.NewDecoder(res.Body).Decode(&snapRes); err != nil {
+		log.Printf("Error decoding Midtrans response: %v", err)
 		return nil, err
 	}
 
