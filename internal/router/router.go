@@ -34,6 +34,9 @@ func SetupRouter(merchantHandler handler.MerchantHandler, transactionHandler han
 	transactionGroup.Use(middleware.APIKeyAuth(merchantRepo))
 	{
 		transactionGroup.POST("/", transactionHandler.Create)
+		transactionGroup.GET("/:id", transactionHandler.GetById)
+		transactionGroup.GET("/:order_id", transactionHandler.GetByOrderId)
+		transactionGroup.PUT("/:id", transactionHandler.UpdateStatusAndRaw)
 	}
 
 	return r

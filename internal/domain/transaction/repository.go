@@ -8,6 +8,7 @@ import (
 type TransactionRepository interface {
 	Create(tx *Transaction) error
 	UpdateStatus(id uuid.UUID, status string) error
+	FindById(id uuid.UUID) (*Transaction, error)
 	FindOrderById(orderID string) (*Transaction, error)
 	UpdateStatusAndRaw(id uuid.UUID, status string, rawJSON string) error
 }
@@ -32,6 +33,19 @@ func (r *TransactionRepositoryImpl) UpdateStatus(id uuid.UUID, status string) er
 		Update("status", status).Error
 }
 
+// FindById implements TransactionRepository.
+func (r *TransactionRepositoryImpl) FindById(id uuid.UUID) (*Transaction, error) {
+	var t Transaction
+
+	// find by id
+	err := r.db.Where("id = ?", id).First(&t).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &t, nil
+}
+
 // FindOrderById implements TransactionRepository.
 func (r *TransactionRepositoryImpl) FindOrderById(orderID string) (*Transaction, error) {
 	var t Transaction
@@ -47,6 +61,7 @@ func (r *TransactionRepositoryImpl) FindOrderById(orderID string) (*Transaction,
 
 // UpdateStatusAndRaw implements TransactionRepository.
 func (r *TransactionRepositoryImpl) UpdateStatusAndRaw(id uuid.UUID, status string, rawJSON string) error {
+	// update status and raw response
 	return r.db.Model(&Transaction{}).
 		Where("id = ?", id).
 		Updates(map[string]any{

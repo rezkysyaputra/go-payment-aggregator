@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type TransactionHandler struct {
@@ -50,4 +51,74 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 		"redirect_url":   t.RedirectURL,
 		"status":         t.Status,
 	})
+}
+
+func (h *TransactionHandler) GetById(c *gin.Context) {
+	id := c.Param("id")
+
+	if _, err := uuid.Parse(id); err != nil {
+		log.Printf("Invalid transaction ID: %v", err)
+		helper.ErrorResponse(c, http.StatusBadRequest, false, "invalid transaction ID")
+		return
+	}
+
+	tx, err := h.service.FindById(uuid.Must(uuid.Parse(id)))
+	if err != nil {
+		log.Printf("Error finding transaction: %v", err)
+		helper.ErrorResponse(c, http.StatusNotFound, false, "transaction not found")
+		return
+	}
+
+	helper.SuccessResponse(c, http.StatusOK, true, "transaction found", gin.H{
+		"transaction_id": tx.ID,
+		"redirect_url":   tx.RedirectURL,
+		"status":         tx.Status,
+	})
+}
+
+func (h *TransactionHandler) GetByOrderId(c *gin.Context) {
+	orderId := c.Param("order_id")
+
+	tx, err := h.service.FindOrderById(orderId)
+	if err != nil {
+		log.Printf("Error finding transaction: %v", err)
+		helper.ErrorResponse(c, http.StatusNotFound, false, "transaction not found")
+		return
+	}
+
+	helper.SuccessResponse(c, http.StatusOK, true, "transaction found", gin.H{
+		"transaction_id": tx.ID,
+		"redirect_url":   tx.RedirectURL,
+		"status":         tx.Status,
+	})
+}
+
+func (h *TransactionHandler) UpdateStatusAndRaw(c *gin.Context) {
+	id := c.Param("id")
+
+	if _, err := uuid.Parse(id); err != nil {
+		log.Printf("Invalid transaction ID: %v", err)
+		helper.ErrorResponse(c, http.StatusBadRequest, false, "invalid transaction ID")
+		return
+	}
+
+	var req struct {
+		Status  string `json:"status" binding:"required"`
+		RawJSON string `json:"raw_json" binding:"required"`
+	}
+	// bind JSON request
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("Error binding JSON: %v", err)
+		helper.ErrorResponse(c, http.StatusBadRequest, false, err.Error())
+		return
+	}
+
+	// update transaction status and raw response
+	if err := h.service.UpdateStatusAndRaw(uuid.Must(uuid.Parse(id)), req.Status, req.RawJSON); err != nil {
+		log.Printf("Error updating transaction: %v", err)
+		helper.ErrorResponse(c, http.StatusInternalServerError, false, "failed to update transaction")
+		return
+	}
+
+	helper.SuccessResponse(c, http.StatusOK, true, "transaction updated", nil)
 }

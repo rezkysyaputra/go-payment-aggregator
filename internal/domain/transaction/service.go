@@ -13,6 +13,9 @@ import (
 type TransactionService interface {
 	CreateTransaction(MerchantID uuid.UUID, orderID string, amount float64, provider string) (*Transaction, error)
 	ProcessMidtransNotification(payload NotificationPayload) error
+	FindById(id uuid.UUID) (*Transaction, error)
+	FindOrderById(orderID string) (*Transaction, error)
+	UpdateStatusAndRaw(id uuid.UUID, status string, rawJSON string) error
 }
 
 type NotificationPayload map[string]any
@@ -89,19 +92,24 @@ func (s *TransactionServiceImpl) ProcessMidtransNotification(payload Notificatio
 		return fmt.Errorf("invalid signature")
 	}
 
+	// map Midtrans status to internal status
+	midtransStatus, _ := payload["transaction_status"].(string)
+	internalStatus := mapMidtransToInternalStatus(midtransStatus)
+
 	// find transaction by order ID
 	tx, err := s.TransactionRepository.FindOrderById(orderID)
 	if err != nil {
 		return fmt.Errorf("transaction not found: %v", err)
 	}
 
+	// check if transaction is already in final status or same status
+	if isFinalStatus(tx.Status) || internalStatus == tx.Status {
+		return nil
+	}
+
 	// store raw payload as JSON
 	rawB, _ := json.Marshal(payload)
 	rawJSON := string(rawB)
-
-	// map Midtrans status to internal status
-	midtransStatus, _ := payload["transaction_status"].(string)
-	internalStatus := mapMidtransToInternalStatus(midtransStatus)
 
 	// update transaction status and raw response
 	if err := s.TransactionRepository.UpdateStatusAndRaw(tx.ID, internalStatus, rawJSON); err != nil {
@@ -122,5 +130,23 @@ func mapMidtransToInternalStatus(midtransStatus string) string {
 	default:
 		return "unknown"
 	}
+}
 
+func isFinalStatus(status string) bool {
+	return status == "paid" || status == "failed"
+}
+
+// FindById implements TransactionService.
+func (s *TransactionServiceImpl) FindById(id uuid.UUID) (*Transaction, error) {
+	return s.TransactionRepository.FindById(id)
+}
+
+// FindOrderById implements TransactionService.
+func (s *TransactionServiceImpl) FindOrderById(orderID string) (*Transaction, error) {
+	return s.TransactionRepository.FindOrderById(orderID)
+}
+
+// UpdateStatusAndRaw implements TransactionService.
+func (s *TransactionServiceImpl) UpdateStatusAndRaw(id uuid.UUID, status string, rawJSON string) error {
+	return s.TransactionRepository.UpdateStatusAndRaw(id, status, rawJSON)
 }
