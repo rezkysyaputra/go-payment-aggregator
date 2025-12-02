@@ -40,7 +40,7 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 		return
 	}
 
-	helper.SuccessResponse(c, http.StatusOK, true, "merchant created", gin.H{
+	helper.SuccessResponse(c, http.StatusCreated, true, "merchant created", gin.H{
 		"merchant_id": m.ID,
 		"api_key":     m.ApiKey,
 	})
