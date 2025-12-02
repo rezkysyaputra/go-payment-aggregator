@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 type TransactionService interface {
@@ -22,11 +23,11 @@ type NotificationPayload map[string]any
 
 type TransactionServiceImpl struct {
 	TransactionRepository TransactionRepository
-	ServerKey             string
+	Config                *viper.Viper
 }
 
-func NewTransactionService(repo TransactionRepository, serverKey string) TransactionService {
-	return &TransactionServiceImpl{TransactionRepository: repo, ServerKey: serverKey}
+func NewTransactionService(repo TransactionRepository, config *viper.Viper) TransactionService {
+	return &TransactionServiceImpl{TransactionRepository: repo, Config: config}
 }
 
 // CreateTransaction creates a new transaction
@@ -43,8 +44,10 @@ func (s *TransactionServiceImpl) CreateTransaction(merchantID uuid.UUID, orderID
 		UpdatedAt:  time.Now(),
 	}
 
+	serverKey := s.Config.GetString("midtrans.server_key")
+
 	// call Midtrans snap API
-	res, err := midtrans.CreateTransaction(s.ServerKey, orderID, amount)
+	res, err := midtrans.CreateTransaction(serverKey, orderID, amount)
 	if err != nil {
 		log.Printf("Error calling Midtrans CreateTransaction: %v", err)
 		return nil, err
@@ -87,8 +90,10 @@ func (s *TransactionServiceImpl) ProcessMidtransNotification(payload Notificatio
 		payloadSignature = sig
 	}
 
+	serverKey := s.Config.GetString("midtrans.server_key")
+
 	// verify signature
-	if !midtrans.VerifySignature(payloadSignature, orderID, statusCode, grossStr, s.ServerKey) {
+	if !midtrans.VerifySignature(payloadSignature, orderID, statusCode, grossStr, serverKey) {
 		return fmt.Errorf("invalid signature")
 	}
 

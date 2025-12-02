@@ -3,49 +3,29 @@ package main
 import (
 	"fmt"
 	"go-payment-aggregator/internal/config"
-	"go-payment-aggregator/internal/db"
-	"go-payment-aggregator/internal/domain/merchant"
-	"go-payment-aggregator/internal/domain/transaction"
-	"go-payment-aggregator/internal/handler"
-	"go-payment-aggregator/internal/router"
-	"log"
 )
 
 func main() {
+	// init config
+	viperConfig := config.NewViper()
+	log := config.NewLogger(viperConfig)
+	db := config.NewDatabse(viperConfig, log)
+	validate := config.NewValidator(viperConfig)
+	app := config.NewGin()
 
-	// load config
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
-	}
+	// bootstrap
+	config.Bootstrap(&config.BootstrapConfig{
+		Config:   viperConfig,
+		DB:       db,
+		App:      app,
+		Log:      log,
+		Validate: validate,
+	})
 
-	fmt.Println("✅ Config loaded:", cfg.AppEnv)
-
-	// connect DB
-	db, err := db.InitDB(cfg)
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
-	}
-
-	// dependency injection
-	repo := merchant.NewMerchantRepository(db)
-	service := merchant.NewMerchantService(repo)
-	merchantHandler := handler.NewMerchantHandler(service)
-
-	transactionRepo := transaction.NewTransactionRepository(db)
-	transactionService := transaction.NewTransactionService(transactionRepo, cfg.MidtransServerKey)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
-
-	// webhook handler
-	webhookHandler := handler.NewWebhookHandler(transactionService)
-
-	// setup router
-	r := router.SetupRouter(*merchantHandler, *transactionHandler, repo, *webhookHandler)
-
-	err = r.Run(":" + cfg.Port)
+	// run server
+	port := viperConfig.GetInt("server.port")
+	err := app.Run(fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
-
-	log.Println("🚀 Server running on port " + cfg.Port)
 }
