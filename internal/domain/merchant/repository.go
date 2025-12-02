@@ -3,6 +3,7 @@ package merchant
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -12,12 +13,14 @@ type MerchantRepository interface {
 }
 
 type MerchantRepositoryImpl struct {
-	db *gorm.DB
+	db  *gorm.DB
+	log *logrus.Logger
 }
 
-func NewMerchantRepository(db *gorm.DB) MerchantRepository {
+func NewMerchantRepository(db *gorm.DB, log *logrus.Logger) MerchantRepository {
 	return &MerchantRepositoryImpl{
-		db: db,
+		db:  db,
+		log: log,
 	}
 }
 

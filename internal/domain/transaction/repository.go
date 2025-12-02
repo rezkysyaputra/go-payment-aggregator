@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -14,11 +15,12 @@ type TransactionRepository interface {
 }
 
 type TransactionRepositoryImpl struct {
-	db *gorm.DB
+	db  *gorm.DB
+	log *logrus.Logger
 }
 
-func NewTransactionRepository(db *gorm.DB) TransactionRepository {
-	return &TransactionRepositoryImpl{db: db}
+func NewTransactionRepository(db *gorm.DB, log *logrus.Logger) TransactionRepository {
+	return &TransactionRepositoryImpl{db: db, log: log}
 }
 
 // Create implements TransactionRepository.

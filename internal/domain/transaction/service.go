@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-payment-aggregator/internal/gateway/midtrans"
-	"log"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -24,10 +24,11 @@ type NotificationPayload map[string]any
 type TransactionServiceImpl struct {
 	TransactionRepository TransactionRepository
 	Config                *viper.Viper
+	Log                   *logrus.Logger
 }
 
-func NewTransactionService(repo TransactionRepository, config *viper.Viper) TransactionService {
-	return &TransactionServiceImpl{TransactionRepository: repo, Config: config}
+func NewTransactionService(repo TransactionRepository, config *viper.Viper, log *logrus.Logger) TransactionService {
+	return &TransactionServiceImpl{TransactionRepository: repo, Config: config, Log: log}
 }
 
 // CreateTransaction creates a new transaction
@@ -49,7 +50,7 @@ func (s *TransactionServiceImpl) CreateTransaction(merchantID uuid.UUID, orderID
 	// call Midtrans snap API
 	res, err := midtrans.CreateTransaction(serverKey, orderID, amount)
 	if err != nil {
-		log.Printf("Error calling Midtrans CreateTransaction: %v", err)
+		s.Log.Printf("Error calling Midtrans CreateTransaction: %v", err)
 		return nil, err
 	}
 
@@ -59,7 +60,7 @@ func (s *TransactionServiceImpl) CreateTransaction(merchantID uuid.UUID, orderID
 
 	// save to database
 	if err := s.TransactionRepository.Create(t); err != nil {
-		log.Printf("Error saving transaction to database: %v", err)
+		s.Log.Printf("Error saving transaction to database: %v", err)
 		return nil, err
 	}
 

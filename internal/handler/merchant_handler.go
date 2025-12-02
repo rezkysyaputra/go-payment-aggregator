@@ -7,15 +7,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type MerchantHandler struct {
 	service merchant.MerchantService
+	log     *logrus.Logger
 }
 
-func NewMerchantHandler(s merchant.MerchantService) *MerchantHandler {
+func NewMerchantHandler(s merchant.MerchantService, log *logrus.Logger) *MerchantHandler {
 	return &MerchantHandler{
 		service: s,
+		log:     log,
 	}
 }
 

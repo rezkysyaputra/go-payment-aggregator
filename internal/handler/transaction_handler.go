@@ -4,20 +4,22 @@ import (
 	"go-payment-aggregator/internal/domain/merchant"
 	"go-payment-aggregator/internal/domain/transaction"
 	"go-payment-aggregator/internal/helper"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type TransactionHandler struct {
 	service transaction.TransactionService
+	log     *logrus.Logger
 }
 
-func NewTransactionHandler(s transaction.TransactionService) *TransactionHandler {
+func NewTransactionHandler(s transaction.TransactionService, log *logrus.Logger) *TransactionHandler {
 	return &TransactionHandler{
 		service: s,
+		log:     log,
 	}
 }
 
@@ -31,7 +33,7 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 	var req createTransactionRequest
 	// bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("Error binding JSON: %v", err)
+		h.log.Printf("Error binding JSON: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, err.Error())
 		return
 	}
@@ -41,7 +43,7 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 	// create transaction
 	t, err := h.service.CreateTransaction(m.ID, req.OrderID, req.Amount, req.Provider)
 	if err != nil {
-		log.Printf("Error creating transaction: %v", err)
+		h.log.Printf("Error creating transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusInternalServerError, false, "failed to create transaction")
 		return
 	}
@@ -57,14 +59,14 @@ func (h *TransactionHandler) GetById(c *gin.Context) {
 	id := c.Param("id")
 
 	if _, err := uuid.Parse(id); err != nil {
-		log.Printf("Invalid transaction ID: %v", err)
+		h.log.Printf("Invalid transaction ID: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, "invalid transaction ID")
 		return
 	}
 
 	tx, err := h.service.FindById(uuid.Must(uuid.Parse(id)))
 	if err != nil {
-		log.Printf("Error finding transaction: %v", err)
+		h.log.Printf("Error finding transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusNotFound, false, "transaction not found")
 		return
 	}
@@ -81,7 +83,7 @@ func (h *TransactionHandler) GetByOrderId(c *gin.Context) {
 
 	tx, err := h.service.FindOrderById(orderId)
 	if err != nil {
-		log.Printf("Error finding transaction: %v", err)
+		h.log.Printf("Error finding transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusNotFound, false, "transaction not found")
 		return
 	}
@@ -97,7 +99,7 @@ func (h *TransactionHandler) UpdateStatusAndRaw(c *gin.Context) {
 	id := c.Param("id")
 
 	if _, err := uuid.Parse(id); err != nil {
-		log.Printf("Invalid transaction ID: %v", err)
+		h.log.Printf("Invalid transaction ID: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, "invalid transaction ID")
 		return
 	}
@@ -108,14 +110,14 @@ func (h *TransactionHandler) UpdateStatusAndRaw(c *gin.Context) {
 	}
 	// bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		log.Printf("Error binding JSON: %v", err)
+		h.log.Printf("Error binding JSON: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, err.Error())
 		return
 	}
 
 	// update transaction status and raw response
 	if err := h.service.UpdateStatusAndRaw(uuid.Must(uuid.Parse(id)), req.Status, req.RawJSON); err != nil {
-		log.Printf("Error updating transaction: %v", err)
+		h.log.Printf("Error updating transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusInternalServerError, false, "failed to update transaction")
 		return
 	}

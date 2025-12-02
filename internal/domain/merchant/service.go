@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 type MerchantService interface {
@@ -14,11 +15,13 @@ type MerchantService interface {
 
 type MerchantServiceImpl struct {
 	MerchantRepository MerchantRepository
+	Log                *logrus.Logger
 }
 
-func NewMerchantService(repo MerchantRepository) MerchantService {
+func NewMerchantService(repo MerchantRepository, log *logrus.Logger) MerchantService {
 	return &MerchantServiceImpl{
 		MerchantRepository: repo,
+		Log:                log,
 	}
 }
 

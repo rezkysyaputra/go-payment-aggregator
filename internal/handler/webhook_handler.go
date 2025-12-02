@@ -6,15 +6,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type WebhookHandler struct {
 	txService transaction.TransactionService
+	log       *logrus.Logger
 }
 
-func NewWebhookHandler(s transaction.TransactionService) *WebhookHandler {
+func NewWebhookHandler(s transaction.TransactionService, log *logrus.Logger) *WebhookHandler {
 	return &WebhookHandler{
 		txService: s,
+		log:       log,
 	}
 }
 

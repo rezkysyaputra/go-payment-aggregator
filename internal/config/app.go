@@ -23,17 +23,17 @@ type BootstrapConfig struct {
 
 func Bootstrap(config *BootstrapConfig) {
 	// setup repositories
-	merchantRepo := merchant.NewMerchantRepository(config.DB)
-	transactionRepo := transaction.NewTransactionRepository(config.DB)
+	merchantRepo := merchant.NewMerchantRepository(config.DB, config.Log)
+	transactionRepo := transaction.NewTransactionRepository(config.DB, config.Log)
 
 	// setup services
-	merchantService := merchant.NewMerchantService(merchantRepo)
-	transactionService := transaction.NewTransactionService(transactionRepo, config.Config)
+	merchantService := merchant.NewMerchantService(merchantRepo, config.Log)
+	transactionService := transaction.NewTransactionService(transactionRepo, config.Config, config.Log)
 
 	// setup handlers
-	merchantHandler := handler.NewMerchantHandler(merchantService)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
-	webhookHandler := handler.NewWebhookHandler(transactionService)
+	merchantHandler := handler.NewMerchantHandler(merchantService, config.Log)
+	transactionHandler := handler.NewTransactionHandler(transactionService, config.Log)
+	webhookHandler := handler.NewWebhookHandler(transactionService, config.Log)
 
 	// setup router
 	router.SetupRouter(config.App, *merchantHandler, *transactionHandler, merchantRepo, *webhookHandler)
