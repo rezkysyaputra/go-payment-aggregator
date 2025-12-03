@@ -28,7 +28,7 @@ func NewDatabse(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
 			SlowThreshold:             time.Second * 5,
-			Colorful:                  false,
+			Colorful:                  true,
 			IgnoreRecordNotFoundError: true,
 			ParameterizedQueries:      true,
 			LogLevel:                  logger.Info,
