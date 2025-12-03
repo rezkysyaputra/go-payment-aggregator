@@ -86,7 +86,7 @@ paths:
                           properties:
                             transaction_id: { type: string }
                             redirect_url: { type: string }
-                            status: { type: string }
+                            success: { type: boolean }
         "400":
           description: Bad Request
           content:
@@ -96,7 +96,7 @@ paths:
 
   /transaction/{id}:
     get:
-      summary: Get transaction detail
+      summary: Get transaction detail by transaction ID
       tags: [Transaction]
       parameters:
         - in: header
@@ -111,7 +111,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Transaction detail
+          description: Transaction detail by transaction ID
           content:
             application/json:
               schema:
@@ -129,7 +129,52 @@ paths:
                             order_id: { type: string }
                             provider: { type: string }
                             amount: { type: integer }
-                            status: { type: string }
+                            success: { type: boolean }
+                            external_ref: { type: string }
+                            raw_response:
+                              type: object
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /transaction/order/{order_id}:
+    get:
+      summary: Get transaction detail by order ID
+      tags: [Transaction]
+      parameters:
+        - in: header
+          name: x-api-key
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transaction detail by order ID
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            transaction_id: { type: string }
+                            merchant_id: { type: string }
+                            order_id: { type: string }
+                            provider: { type: string }
+                            amount: { type: integer }
+                            success: { type: boolean }
                             external_ref: { type: string }
                             raw_response:
                               type: object
@@ -177,7 +222,7 @@ components:
     SuccessResponse:
       type: object
       properties:
-        status:
+        success:
           type: boolean
           description: Indicates if the request was successful
           example: true
@@ -190,13 +235,13 @@ components:
           description: The payload of the successful response, typically an array of items or a single item wrapped in an array.
           items: {} # Can be refined per endpoint to specify the type of items in the array
       required:
-        - status
+        - success
         - message
         - data
     ErrorResponse:
       type: object
       properties:
-        status:
+        success:
           type: boolean
           description: Indicates if the request was successful
           example: false
@@ -205,5 +250,5 @@ components:
           description: A human-readable error message
           example: Invalid input provided
       required:
-        - status
+        - success
         - error
