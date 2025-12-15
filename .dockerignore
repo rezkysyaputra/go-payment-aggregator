@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+
+# Go
+vendor/
+go.work
+go.work.sum
+
+# Build
+main
+*.exe
+*.test
+*.out
+*.log
+application.log
+
+# Config
+# Ignore real config keys in copy (safety), except example
+config.json
+.env
