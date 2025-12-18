@@ -5,25 +5,25 @@ import (
 )
 
 type Response struct {
-	Status  bool   `json:"status"`
+	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`
 	Error   string `json:"error,omitempty"`
 	Data    any    `json:"data,omitempty"`
 }
 
-func SuccessResponse(c *gin.Context, code int, status bool, message string, data any) {
+func SuccessResponse(c *gin.Context, code int, success bool, message string, data any) {
 	response := Response{
-		Status:  status,
+		Success: success,
 		Message: message,
 		Data:    data,
 	}
 	c.JSON(code, response)
 }
 
-func ErrorResponse(c *gin.Context, code int, status bool, error string) {
+func ErrorResponse(c *gin.Context, code int, success bool, error string) {
 	response := Response{
-		Status: status,
-		Error:  error,
+		Success: success,
+		Error:   error,
 	}
 	c.JSON(code, response)
 }

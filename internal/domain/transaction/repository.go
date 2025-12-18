@@ -52,8 +52,8 @@ func (r *TransactionRepositoryImpl) FindById(id uuid.UUID) (*Transaction, error)
 func (r *TransactionRepositoryImpl) FindOrderById(orderID string) (*Transaction, error) {
 	var t Transaction
 
-	// find by orderID
-	err := r.db.Where("order_id = ?", orderID).First(&t).Error
+	// find by orderID with merchant preloaded
+	err := r.db.Preload("Merchant").Where("order_id = ?", orderID).First(&t).Error
 	if err != nil {
 		return nil, err
 	}

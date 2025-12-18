@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go-payment-aggregator/internal/gateway"
 	"log"
 	"net/http"
 )
@@ -22,8 +23,18 @@ type SnapResponse struct {
 	RedirectURL string `json:"redirect_url"`
 }
 
-func CreateTransaction(serverKey string, orderID string, amount float64) (*SnapResponse, error) {
-	if serverKey == "" {
+type MidtransGateway struct {
+	ServerKey string
+}
+
+func NewMidtransGateway(serverKey string) *MidtransGateway {
+	return &MidtransGateway{
+		ServerKey: serverKey,
+	}
+}
+
+func (g *MidtransGateway) CreateTransaction(orderID string, amount float64) (*gateway.PaymentResponse, error) {
+	if g.ServerKey == "" {
 		log.Println("Midtrans server key is not configured")
 		return nil, fmt.Errorf("midtrans server key is not configured")
 	}
@@ -46,7 +57,7 @@ func CreateTransaction(serverKey string, orderID string, amount float64) (*SnapR
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.SetBasicAuth(serverKey, "")
+	req.SetBasicAuth(g.ServerKey, "")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
@@ -63,5 +74,55 @@ func CreateTransaction(serverKey string, orderID string, amount float64) (*SnapR
 		return nil, err
 	}
 
-	return &snapRes, nil
+	return &gateway.PaymentResponse{
+		Token:       snapRes.Token,
+		RedirectURL: snapRes.RedirectURL,
+	}, nil
+}
+
+func (g *MidtransGateway) VerifySignature(payload map[string]any) bool {
+	orderID, ok := payload["order_id"].(string)
+	if !ok {
+		return false
+	}
+
+	statusCode, _ := payload["status_code"].(string)
+
+	grossStr, err := GrossAmountToString(payload["gross_amount"])
+	if err != nil {
+		return false
+	}
+
+	payloadSignature := ""
+	if sig, exists := payload["signature_key"].(string); exists {
+		payloadSignature = sig
+	}
+
+	return VerifySignature(payloadSignature, orderID, statusCode, grossStr, g.ServerKey)
+}
+
+func (g *MidtransGateway) GetOrderID(payload map[string]any) (string, error) {
+	orderID, ok := payload["order_id"].(string)
+	if !ok {
+		return "", fmt.Errorf("order_id not found")
+	}
+	return orderID, nil
+}
+
+func (g *MidtransGateway) GetStatus(payload map[string]any) (string, error) {
+	status, ok := payload["transaction_status"].(string)
+	if !ok {
+		return "", fmt.Errorf("transaction_status not found")
+	}
+
+	switch status {
+	case "capture", "settlement":
+		return "paid", nil
+	case "deny", "expire", "cancel":
+		return "failed", nil
+	case "pending":
+		return "pending", nil
+	default:
+		return "unknown", nil
+	}
 }

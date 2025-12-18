@@ -11,6 +11,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Enum for provider
+const (
+	ProviderMidtrans = "midtrans"
+	ProviderXendit   = "xendit"
+	ProviderMock     = "mock"
+)
+
+var ValidProviders = map[string]bool{
+	ProviderMidtrans: true,
+	ProviderXendit:   true,
+	ProviderMock:     true,
+}
+
 type TransactionHandler struct {
 	service transaction.TransactionService
 	log     *logrus.Logger
@@ -26,15 +39,21 @@ func NewTransactionHandler(s transaction.TransactionService, log *logrus.Logger)
 type createTransactionRequest struct {
 	OrderID  string  `json:"order_id" binding:"required"`
 	Amount   float64 `json:"amount" binding:"required,gt=0"`
-	Provider string  `json:"provider" binding:"required,oneof=midtrans"`
+	Provider string  `json:"provider" binding:"required"`
 }
 
 func (h *TransactionHandler) Create(c *gin.Context) {
 	var req createTransactionRequest
 	// bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.log.Printf("Error binding JSON: %v", err)
+		h.log.Errorf("Error binding JSON: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, err.Error())
+		return
+	}
+
+	// validate provider
+	if _, ok := ValidProviders[req.Provider]; !ok {
+		helper.ErrorResponse(c, http.StatusBadRequest, false, "invalid provider or provider not supported")
 		return
 	}
 
@@ -43,7 +62,7 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 	// create transaction
 	t, err := h.service.CreateTransaction(m.ID, req.OrderID, req.Amount, req.Provider)
 	if err != nil {
-		h.log.Printf("Error creating transaction: %v", err)
+		h.log.Errorf("Error creating transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusInternalServerError, false, "failed to create transaction")
 		return
 	}
@@ -59,14 +78,14 @@ func (h *TransactionHandler) GetById(c *gin.Context) {
 	id := c.Param("id")
 
 	if _, err := uuid.Parse(id); err != nil {
-		h.log.Printf("Invalid transaction ID: %v", err)
+		h.log.Errorf("Invalid transaction ID: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, "invalid transaction ID")
 		return
 	}
 
 	tx, err := h.service.FindById(uuid.Must(uuid.Parse(id)))
 	if err != nil {
-		h.log.Printf("Error finding transaction: %v", err)
+		h.log.Errorf("Error finding transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusNotFound, false, "transaction not found")
 		return
 	}
@@ -83,7 +102,7 @@ func (h *TransactionHandler) GetByOrderId(c *gin.Context) {
 
 	tx, err := h.service.FindOrderById(orderId)
 	if err != nil {
-		h.log.Printf("Error finding transaction: %v", err)
+		h.log.Errorf("Error finding transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusNotFound, false, "transaction not found")
 		return
 	}
@@ -99,7 +118,7 @@ func (h *TransactionHandler) UpdateStatusAndRaw(c *gin.Context) {
 	id := c.Param("id")
 
 	if _, err := uuid.Parse(id); err != nil {
-		h.log.Printf("Invalid transaction ID: %v", err)
+		h.log.Errorf("Invalid transaction ID: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, "invalid transaction ID")
 		return
 	}
@@ -110,14 +129,14 @@ func (h *TransactionHandler) UpdateStatusAndRaw(c *gin.Context) {
 	}
 	// bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.log.Printf("Error binding JSON: %v", err)
+		h.log.Errorf("Error binding JSON: %v", err)
 		helper.ErrorResponse(c, http.StatusBadRequest, false, err.Error())
 		return
 	}
 
 	// update transaction status and raw response
 	if err := h.service.UpdateStatusAndRaw(uuid.Must(uuid.Parse(id)), req.Status, req.RawJSON); err != nil {
-		h.log.Printf("Error updating transaction: %v", err)
+		h.log.Errorf("Error updating transaction: %v", err)
 		helper.ErrorResponse(c, http.StatusInternalServerError, false, "failed to update transaction")
 		return
 	}

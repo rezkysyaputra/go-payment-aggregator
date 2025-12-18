@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func NewDatabse(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
+func NewDatabase(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 	// load config
 	username := viper.GetString("database.username")
 	password := viper.GetString("database.password")
@@ -22,7 +22,7 @@ func NewDatabse(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
 	maxConnection := viper.GetInt("database.pool.max")
 	maxLifetimeConnection := viper.GetInt("database.pool.lifetime")
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai", host, username, password, database, port)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable", host, username, password, database, port)
 
 	// open connection
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
