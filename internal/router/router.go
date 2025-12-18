@@ -6,9 +6,10 @@ import (
 	"go-payment-aggregator/internal/middleware"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
-func SetupRouter(app *gin.Engine, merchantHandler handler.MerchantHandler, transactionHandler handler.TransactionHandler, merchantRepo merchant.MerchantRepository, webhookHandler handler.WebhookHandler) {
+func SetupRouter(app *gin.Engine, merchantHandler handler.MerchantHandler, transactionHandler handler.TransactionHandler, merchantRepo merchant.MerchantRepository, webhookHandler handler.WebhookHandler, log *logrus.Logger) {
 	app.GET("/", func(ctx *gin.Context) {
 		ctx.String(200, "Hello world")
 	})
@@ -19,6 +20,8 @@ func SetupRouter(app *gin.Engine, merchantHandler handler.MerchantHandler, trans
 	webhookGroup := v1.Group("/webhook")
 	{
 		webhookGroup.POST("/midtrans", webhookHandler.Midtrans)
+		webhookGroup.POST("/mock", webhookHandler.Mock)
+		webhookGroup.POST("/xendit", webhookHandler.Xendit)
 	}
 
 	// Merchant group
@@ -29,7 +32,7 @@ func SetupRouter(app *gin.Engine, merchantHandler handler.MerchantHandler, trans
 
 	// Transaction group
 	transactionGroup := v1.Group("/transaction")
-	transactionGroup.Use(middleware.APIKeyAuth(merchantRepo))
+	transactionGroup.Use(middleware.APIKeyAuth(merchantRepo, log))
 	{
 		transactionGroup.POST("/", transactionHandler.Create)
 		transactionGroup.GET("/:id", transactionHandler.GetById)

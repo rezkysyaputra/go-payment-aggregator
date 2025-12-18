@@ -11,4 +11,6 @@ type PaymentResponse struct {
 type PaymentGateway interface {
 	CreateTransaction(orderID string, amount float64) (*PaymentResponse, error)
 	VerifySignature(payload map[string]any) bool
+	GetStatus(payload map[string]any) (string, error)
+	GetOrderID(payload map[string]any) (string, error)
 }
