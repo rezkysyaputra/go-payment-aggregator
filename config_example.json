@@ -18,6 +18,12 @@
             "lifetime": 10
         }
     },
+    "redis": {
+        "host": "redis",
+        "port": 6379,
+        "password": "",
+        "db": 0
+    },
     "logging": {
         "level": 3
     },

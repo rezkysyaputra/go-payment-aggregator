@@ -6,9 +6,9 @@ services:
     container_name: go-payment-aggregator
     restart: unless-stopped
     ports:
-      - "8080:8080" # Adjust if your app uses a different port in config.json
+      - "8080:8080"
     volumes:
-      - ./config.docker.json:/app/config.json # Mounts the docker-specific config into the container
+      - ./config.docker.json:/app/config.json
     depends_on:
       db:
         condition: service_healthy
@@ -35,6 +35,17 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:alpine
+    container_name: payment-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
   migrate:
     image: migrate/migrate
     container_name: payment-migrate
@@ -56,6 +67,7 @@ services:
 
 volumes:
   db-data:
+  redis-data:
 
 networks:
   app-network:

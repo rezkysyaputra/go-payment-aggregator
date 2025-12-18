@@ -9,7 +9,7 @@ func main() {
 	// init config
 	viperConfig := config.NewViper()
 	log := config.NewLogger(viperConfig)
-	db := config.NewDatabse(viperConfig, log)
+	db := config.NewDatabase(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
 	app := config.NewGin()
 
