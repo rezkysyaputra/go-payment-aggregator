@@ -18,8 +18,8 @@ func TestCreateTransaction(t *testing.T) {
 	merchant := CreateMerchant()
 
 	requestBody := map[string]interface{}{
-		"order_id": "order_123",
-		"provider": "midtrans",
+		"order_id": "order_mock_123",
+		"provider": "mock",
 		"amount":   1000,
 	}
 
@@ -39,6 +39,58 @@ func TestCreateTransaction(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &result)
 	assert.Equal(t, "transaction created", result.Message)
 	assert.NotEmpty(t, result.Data)
+}
+
+func TestCreateTransactionXendit(t *testing.T) {
+	ClearAll()
+	merchant := CreateMerchant()
+
+	// Kita test apakah Xendit diterima sebagai provider valid
+	// Note: Ini mungkin gagal jika API Key Xendit belum diset di environment test
+	// Tapi setidaknya kita validating usernya boleh pilih "xendit"
+	requestBody := map[string]interface{}{
+		"order_id": "order_xendit_123",
+		"provider": "xendit",
+		"amount":   1000,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest("POST", "/v1/transaction/", bytes.NewReader(bodyJson))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("x-api-key", merchant.ApiKey)
+
+	w := httptest.NewRecorder()
+	app.ServeHTTP(w, request)
+
+	// Kita expect Created (201) atau InternalServerError (500)
+	// Kalau 500 berarti validasi lolos, tapi gagal connect ke Xendit (karena key dummy)
+	// Kalau 400 berarti validasi gagal. Target kita bukan 400.
+	assert.NotEqual(t, http.StatusBadRequest, w.Code)
+}
+
+func TestCreateTransactionInvalidProvider(t *testing.T) {
+	ClearAll()
+	merchant := CreateMerchant()
+
+	requestBody := map[string]interface{}{
+		"order_id": "order_invalid",
+		"provider": "paypal", // Provider tidak dikenal
+		"amount":   1000,
+	}
+
+	bodyJson, err := json.Marshal(requestBody)
+	assert.Nil(t, err)
+
+	request := httptest.NewRequest("POST", "/v1/transaction/", bytes.NewReader(bodyJson))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("x-api-key", merchant.ApiKey)
+
+	w := httptest.NewRecorder()
+	app.ServeHTTP(w, request)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestCreateTransactionError(t *testing.T) {

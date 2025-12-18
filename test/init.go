@@ -25,7 +25,7 @@ func init() {
 	log = logrus.New()
 	validate = validator.New()
 	app = gin.Default()
-	db = config.NewDatabse(viperConfig, log)
+	db = config.NewDatabase(viperConfig, log)
 
 	config.Bootstrap(&config.BootstrapConfig{
 		Config:   viperConfig,
