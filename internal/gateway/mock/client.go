@@ -27,7 +27,6 @@ func (g *MockGateway) VerifySignature(payload map[string]any) bool {
 }
 
 func (g *MockGateway) GetOrderID(payload map[string]any) (string, error) {
-	// Di mock kita anggap fieldnya "order_id" juga
 	orderID, ok := payload["order_id"].(string)
 	if !ok {
 		return "", fmt.Errorf("order_id not found")
@@ -36,8 +35,6 @@ func (g *MockGateway) GetOrderID(payload map[string]any) (string, error) {
 }
 
 func (g *MockGateway) GetStatus(payload map[string]any) (string, error) {
-	// Simplifikasi: Kalau mock, assume selalu statusnya 'paid'
-	// Atau bisa juga baca dari payload kalau mau testing status failed
 	if s, ok := payload["mock_status"].(string); ok {
 		return s, nil
 	}

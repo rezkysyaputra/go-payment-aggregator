@@ -23,6 +23,7 @@ func NewRedis(config *viper.Viper, log *logrus.Logger) *redis.Client {
 		port = 6379
 	}
 
+	// Create Redis client
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", host, port),
 		Password: password,
@@ -31,7 +32,6 @@ func NewRedis(config *viper.Viper, log *logrus.Logger) *redis.Client {
 
 	// Test connection
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		// Log but don't panic if Redis is optional, but for queue it is critical
 		log.Errorf("Failed to connect to Redis: %v", err)
 	}
 
