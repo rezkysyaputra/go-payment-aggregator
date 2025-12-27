@@ -30,19 +30,16 @@ type Merchant struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-// --- Repository Interface (Kontrak ke Database) ---
 type MerchantRepository interface {
 	Create(ctx context.Context, m *Merchant) error
 	FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*Merchant, error)
 }
 
-// --- Usecase Interface (Kontrak ke Logic) ---
 type MerchantUsecase interface {
 	Register(ctx context.Context, req *RegisterMerchantRequest) (*Merchant, error)
 }
 
-// --- DTOs (Data Transfer Objects) ---
 type RegisterMerchantRequest struct {
 	Name        string
 	Email       string
