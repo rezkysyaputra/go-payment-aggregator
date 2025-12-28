@@ -12,6 +12,7 @@ func main() {
 	db := config.NewDatabase(viperConfig, log)
 	validate := config.NewValidator(viperConfig)
 	app := config.NewGin()
+	redis := config.NewRedis(viperConfig, log)
 
 	// bootstrap
 	config.Bootstrap(&config.BootstrapConfig{
@@ -20,6 +21,7 @@ func main() {
 		App:      app,
 		Log:      log,
 		Validate: validate,
+		Redis:    redis,
 	})
 
 	// run server
