@@ -53,6 +53,7 @@ type RegisterMerchantRequest struct {
 	CallbackURL string
 }
 
+// UpdateMerchantRequest struct
 type UpdateMerchantRequest struct {
 	Name        string
 	CallbackURL string
