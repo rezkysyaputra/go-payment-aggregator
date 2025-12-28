@@ -3,22 +3,34 @@
     "info": {
         "title": "Go Payment Aggregator API",
         "version": "1.0.0",
-        "description": "Unified Payment Gateway Aggregator accessing Midtrans, Xendit, and Mock providers."
+        "description": "Unified Payment Gateway Aggregator accessing Midtrans, Xendit, Stripe, and Mock providers."
     },
     "servers": [
         {
-            "url": "http://localhost:8080/v1",
+            "url": "http://localhost:8080/api/v1",
             "description": "Local Development Server"
         }
     ],
     "components": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-API-KEY",
+                "description": "Your Merchant API Key"
+            }
+        },
         "schemas": {
             "SuccessResponse": {
                 "type": "object",
                 "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": true
+                    "code": {
+                        "type": "integer",
+                        "example": 200
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "success"
                     },
                     "message": {
                         "type": "string",
@@ -29,7 +41,8 @@
                     }
                 },
                 "required": [
-                    "success",
+                    "code",
+                    "status",
                     "message",
                     "data"
                 ]
@@ -37,24 +50,32 @@
             "ErrorResponse": {
                 "type": "object",
                 "properties": {
-                    "success": {
-                        "type": "boolean",
-                        "example": false
+                    "code": {
+                        "type": "integer",
+                        "example": 400
                     },
-                    "error": {
+                    "status": {
+                        "type": "string",
+                        "example": "error"
+                    },
+                    "message": {
                         "type": "string",
                         "example": "Invalid input"
+                    },
+                    "data": {
+                        "type": "null"
                     }
                 },
                 "required": [
-                    "success",
-                    "error"
+                    "code",
+                    "status",
+                    "message"
                 ]
             }
         }
     },
     "paths": {
-        "/merchant/register": {
+        "/merchants": {
             "post": {
                 "summary": "Register a new Merchant",
                 "tags": [
@@ -71,6 +92,11 @@
                                         "type": "string",
                                         "example": "Toko Baju Kekinian"
                                     },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "owner@tokobaju.com"
+                                    },
                                     "callback_url": {
                                         "type": "string",
                                         "format": "uri",
@@ -79,6 +105,7 @@
                                 },
                                 "required": [
                                     "name",
+                                    "email",
                                     "callback_url"
                                 ]
                             }
@@ -91,29 +118,17 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/SuccessResponse"
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "merchant_id": {
-                                                            "type": "string",
-                                                            "format": "uuid"
-                                                        },
-                                                        "api_key": {
-                                                            "type": "string",
-                                                            "description": "Keep this secret!"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    ]
+                                    "$ref": "#/components/schemas/SuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Input",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
                                 }
                             }
                         }
@@ -121,20 +136,117 @@
                 }
             }
         },
-        "/transaction": {
+        "/merchants/profile": {
+            "get": {
+                "summary": "Get Merchant Profile",
+                "tags": [
+                    "Merchant"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Merchant Profile Data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SuccessResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "summary": "Update Merchant Profile",
+                "tags": [
+                    "Merchant"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "callback_url": {
+                                        "type": "string",
+                                        "format": "uri"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SuccessResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/merchants/api-key/regenerate": {
+            "post": {
+                "summary": "Regenerate API Key (Revoke old key)",
+                "tags": [
+                    "Merchant"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "New API Key Generated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SuccessResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions": {
             "post": {
                 "summary": "Create a new Payment Transaction",
                 "tags": [
                     "Transaction"
                 ],
-                "parameters": [
+                "security": [
                     {
-                        "in": "header",
-                        "name": "x-api-key",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                        "ApiKeyAuth": []
                     }
                 ],
                 "requestBody": {
@@ -146,21 +258,39 @@
                                 "properties": {
                                     "order_id": {
                                         "type": "string",
+                                        "description": "Unique Order ID from Merchant system",
                                         "example": "ORD-12345"
                                     },
                                     "amount": {
-                                        "type": "number",
-                                        "minimum": 1,
+                                        "type": "integer",
+                                        "description": "Amount in smallest currency unit (e.g. IDR 10000 -> 10000, USD 10.50 -> 1050)",
+                                        "minimum": 100,
                                         "example": 150000
+                                    },
+                                    "currency": {
+                                        "type": "string",
+                                        "default": "IDR",
+                                        "enum": [
+                                            "IDR",
+                                            "USD",
+                                            "SGD"
+                                        ],
+                                        "example": "IDR"
                                     },
                                     "provider": {
                                         "type": "string",
                                         "enum": [
                                             "midtrans",
                                             "xendit",
+                                            "stripe",
                                             "mock"
                                         ],
                                         "example": "midtrans"
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "description": "Specific method if provider supports it (e.g. 'credit_card', 'bank_transfer', 'qris')",
+                                        "example": "bank_transfer"
                                     }
                                 },
                                 "required": [
@@ -178,33 +308,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "allOf": [
-                                        {
-                                            "$ref": "#/components/schemas/SuccessResponse"
-                                        },
-                                        {
-                                            "type": "object",
-                                            "properties": {
-                                                "data": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "transaction_id": {
-                                                            "type": "string",
-                                                            "format": "uuid"
-                                                        },
-                                                        "redirect_url": {
-                                                            "type": "string",
-                                                            "format": "uri"
-                                                        },
-                                                        "status": {
-                                                            "type": "string",
-                                                            "example": "pending"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    ]
+                                    "$ref": "#/components/schemas/SuccessResponse"
                                 }
                             }
                         }
@@ -218,25 +322,20 @@
                                 }
                             }
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized (Invalid API Key)",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                }
-                            }
-                        }
                     }
                 }
             }
         },
-        "/transaction/{id}": {
+        "/transactions/{id}": {
             "get": {
                 "summary": "Get Transaction Details by ID",
                 "tags": [
                     "Transaction"
+                ],
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
                 ],
                 "parameters": [
                     {
@@ -247,14 +346,6 @@
                             "type": "string",
                             "format": "uuid"
                         }
-                    },
-                    {
-                        "in": "header",
-                        "name": "x-api-key",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
                     }
                 ],
                 "responses": {
@@ -281,59 +372,11 @@
                 }
             }
         },
-        "/transaction/order/{order_id}": {
-            "get": {
-                "summary": "Get Transaction Details by Order ID",
-                "tags": [
-                    "Transaction"
-                ],
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "order_id",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "in": "header",
-                        "name": "x-api-key",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Transaction Found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SuccessResponse"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Transaction Not Found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/ErrorResponse"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/webhook/midtrans": {
+        "/webhooks/midtrans": {
             "post": {
                 "summary": "Handle Midtrans Notification",
                 "tags": [
-                    "Webhook"
+                    "Webhook (Inbound)"
                 ],
                 "requestBody": {
                     "required": true,
@@ -353,11 +396,11 @@
                 }
             }
         },
-        "/webhook/xendit": {
+        "/webhooks/xendit": {
             "post": {
                 "summary": "Handle Xendit Notification",
                 "tags": [
-                    "Webhook"
+                    "Webhook (Inbound)"
                 ],
                 "parameters": [
                     {
@@ -366,8 +409,7 @@
                         "required": true,
                         "schema": {
                             "type": "string"
-                        },
-                        "description": "Xendit Callback Validation Token"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -388,11 +430,22 @@
                 }
             }
         },
-        "/webhook/mock": {
+        "/webhooks/stripe": {
             "post": {
-                "summary": "Handle Mock Notification (Testing)",
+                "summary": "Handle Stripe Webhook",
                 "tags": [
-                    "Webhook"
+                    "Webhook (Inbound)"
+                ],
+                "parameters": [
+                    {
+                        "in": "header",
+                        "name": "Stripe-Signature",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Stripe signature for verification"
+                    }
                 ],
                 "requestBody": {
                     "required": true,
@@ -400,10 +453,76 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Notification Processed"
+                    }
+                }
+            }
+        }
+    },
+    "webhooks": {
+        "paymentNotification": {
+            "post": {
+                "summary": "Payment Status Notification (Outbound)",
+                "description": "We will send a POST request to your callback_url when a transaction status changes.",
+                "tags": [
+                    "Webhook (Outbound)"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
                                 "properties": {
-                                    "mock_status": {
+                                    "event": {
                                         "type": "string",
-                                        "example": "paid"
+                                        "example": "transaction.status_updated",
+                                        "description": "Event type identifier"
+                                    },
+                                    "data": {
+                                        "type": "object",
+                                        "properties": {
+                                            "transaction_id": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "description": "Our system Transaction ID"
+                                            },
+                                            "order_id": {
+                                                "type": "string",
+                                                "description": "Your Order ID"
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "PAID",
+                                                    "EXPIRED",
+                                                    "FAILED"
+                                                ],
+                                                "description": "New transaction status"
+                                            },
+                                            "amount": {
+                                                "type": "integer",
+                                                "description": "Paid amount"
+                                            },
+                                            "currency": {
+                                                "type": "string",
+                                                "example": "IDR"
+                                            },
+                                            "payment_method": {
+                                                "type": "string",
+                                                "example": "BCA_VA"
+                                            },
+                                            "paid_at": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -412,7 +531,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Notification Processed"
+                        "description": "Acknowledgement. You MUST return 200 OK to stop retries."
                     }
                 }
             }
