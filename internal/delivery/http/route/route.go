@@ -2,6 +2,7 @@ package route
 
 import (
 	"go-payment-aggregator/internal/delivery/http/handler"
+	"go-payment-aggregator/internal/delivery/http/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,6 +10,7 @@ import (
 type RouteConfig struct {
 	App             *gin.Engine
 	MerchantHandler *handler.MerchantHandler
+	AuthMiddleware  *middleware.AuthMiddleware
 }
 
 func (c *RouteConfig) Setup() {

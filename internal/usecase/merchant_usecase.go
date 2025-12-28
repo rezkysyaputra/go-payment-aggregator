@@ -19,6 +19,19 @@ func NewMerchantUC(r domain.MerchantRepository, t time.Duration) domain.Merchant
 	}
 }
 
+func (u *merchantUC) ValidateApiKey(ctx context.Context, apiKey string) (*domain.Merchant, error) {
+	// hash api key
+	apiKeyHash := pkg.HashKey(apiKey)
+
+	// find merchant by api key
+	merchant, err := u.merchantRepo.FindByApiKey(ctx, apiKeyHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return merchant, nil
+}
+
 func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantRequest) (*domain.Merchant, error) {
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(c, u.timeout)

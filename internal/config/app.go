@@ -2,6 +2,7 @@ package config
 
 import (
 	"go-payment-aggregator/internal/delivery/http/handler"
+	"go-payment-aggregator/internal/delivery/http/middleware"
 	"go-payment-aggregator/internal/delivery/http/route"
 	"go-payment-aggregator/internal/repository/postgres"
 	"go-payment-aggregator/internal/usecase"
@@ -64,11 +65,14 @@ func Bootstrap(config *BootstrapConfig) {
 	merchantUsecase := usecase.NewMerchantUC(merchantRepository, config.Config.GetDuration("context_timeout"))
 	// setup handlers
 	merchantHandler := handler.NewMerchantHandler(merchantUsecase)
+	// setup auth middleware
+	authMiddleware := middleware.NewAuthMiddleware(merchantUsecase)
 
 	// router setup
 	routeConfig := &route.RouteConfig{
 		App:             config.App,
 		MerchantHandler: merchantHandler,
+		AuthMiddleware:  authMiddleware,
 	}
 
 	routeConfig.Setup()
