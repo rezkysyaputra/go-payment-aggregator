@@ -6,6 +6,7 @@ import (
 	"go-payment-aggregator/internal/delivery/http/route"
 	"go-payment-aggregator/internal/repository/postgres"
 	"go-payment-aggregator/internal/usecase"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -62,7 +63,7 @@ func Bootstrap(config *BootstrapConfig) {
 	// setup repositories
 	merchantRepository := postgres.NewMerchantRepository(config.DB)
 	// setup usecases
-	merchantUsecase := usecase.NewMerchantUC(merchantRepository, config.Config.GetDuration("context_timeout"))
+	merchantUsecase := usecase.NewMerchantUC(merchantRepository, time.Second*2) // for now set hardcoded timeout to 2 seconds
 	// setup handlers
 	merchantHandler := handler.NewMerchantHandler(merchantUsecase)
 	// setup auth middleware
