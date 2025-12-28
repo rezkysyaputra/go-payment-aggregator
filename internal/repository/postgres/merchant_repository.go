@@ -12,6 +12,7 @@ import (
 type MerchantModel struct {
 	ID          uuid.UUID `gorm:"type:uuid;primary_key"`
 	Name        string    `gorm:"size:255;not null"`
+	Email       string    `gorm:"size:255;unique;not null"`
 	ApiKey      string    `gorm:"size:255;unique"`
 	CallbackURL string    `gorm:"size:255"`
 	Status      string    `gorm:"size:50;not null;default:'ACTIVE'"`
@@ -20,11 +21,16 @@ type MerchantModel struct {
 	UpdatedAt   time.Time
 }
 
+func (MerchantModel) TableName() string {
+	return "merchants"
+}
+
 // toMerchantModel converts domain.Merchant to MerchantModel
 func toMerchantModel(d *domain.Merchant) *MerchantModel {
 	return &MerchantModel{
 		ID:          d.ID,
 		Name:        d.Name,
+		Email:       d.Email,
 		ApiKey:      d.APIKeyHash,
 		CallbackURL: d.CallbackURL,
 		Status:      string(d.Status),
@@ -39,7 +45,8 @@ func (m *MerchantModel) toDomain() *domain.Merchant {
 	return &domain.Merchant{
 		ID:          m.ID,
 		Name:        m.Name,
-		ApiKey:      m.ApiKey,
+		Email:       m.Email,
+		APIKeyHash:  m.ApiKey,
 		CallbackURL: m.CallbackURL,
 		Status:      domain.MerchantStatus(m.Status),
 		Balance:     m.Balance,
