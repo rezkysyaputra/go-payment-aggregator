@@ -37,3 +37,12 @@ type RegisterMerchantResponse struct {
 	ApiKey      string `json:"api_key"`
 	CallbackURL string `json:"callback_url"`
 }
+
+type GetMerchantResponse struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Status      string `json:"status"`
+	Balance     int64  `json:"balance"`
+	CallbackURL string `json:"callback_url"`
+}
