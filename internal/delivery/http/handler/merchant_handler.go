@@ -2,6 +2,8 @@ package handler
 
 import (
 	"go-payment-aggregator/internal/domain"
+	"go-payment-aggregator/internal/pkg/response"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,12 +23,7 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 
 	// bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{
-			"code":    400,
-			"status":  "error",
-			"message": err.Error(),
-			"data":    nil,
-		})
+		response.Error(c, http.StatusBadRequest, "error", err.Error())
 		return
 	}
 
@@ -34,27 +31,20 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 	ctx := c.Request.Context()
 	merchant, err := h.merchantUsecase.Register(ctx, &req)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"code":    500,
-			"status":  "error",
-			"message": err.Error(),
-			"data":    nil,
-		})
+		response.Error(c, http.StatusInternalServerError, "error", err.Error())
 		return
 	}
 
-	// respond with created merchant details
-	c.JSON(201, gin.H{
-		"code":    201,
-		"status":  "success",
-		"message": "merchant created successfully",
-		"data": gin.H{
-			"id":           merchant.ID,
-			"name":         merchant.Name,
-			"email":        merchant.Email,
-			"status":       merchant.Status,
-			"api_key":      merchant.ApiKey,
-			"callback_url": merchant.CallbackURL,
-		},
-	})
+	// prepare response data
+	data := response.RegisterMerchantResponse{
+		ID:          merchant.ID.String(),
+		Name:        merchant.Name,
+		Email:       merchant.Email,
+		Status:      string(merchant.Status),
+		ApiKey:      merchant.ApiKey,
+		CallbackURL: merchant.CallbackURL,
+	}
+
+	// send success response
+	response.Success(c, http.StatusCreated, "success", "merchant created successfully", data)
 }
