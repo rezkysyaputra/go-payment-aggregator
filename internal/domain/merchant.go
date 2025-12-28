@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// --- Enums ---
+// Enums for MerchantStatus
 type MerchantStatus string
 
 const (
@@ -16,13 +16,13 @@ const (
 	MerchantStatusInactive  MerchantStatus = "INACTIVE"
 )
 
-// --- Entity ---
+// Entities for Merchant
 type Merchant struct {
 	ID          uuid.UUID      `json:"id"`
 	Name        string         `json:"name"`
 	Email       string         `json:"email"`
-	ApiKey      string         `json:"api_key,omitempty"` // Plain text (hanya saat create)
-	APIKeyHash  string         `json:"-"`                 // Hash (disimpan di DB)
+	ApiKey      string         `json:"api_key,omitempty"`
+	APIKeyHash  string         `json:"-"`
 	CallbackURL string         `json:"callback_url"`
 	Status      MerchantStatus `json:"status"`
 	Balance     int64          `json:"balance"`
@@ -30,16 +30,19 @@ type Merchant struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
+// Interfaces for Repository
 type MerchantRepository interface {
 	Create(ctx context.Context, m *Merchant) error
 	FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*Merchant, error)
 }
 
+// Interfaces for Usecase
 type MerchantUsecase interface {
 	Register(ctx context.Context, req *RegisterMerchantRequest) (*Merchant, error)
 }
 
+// Request structs
 type RegisterMerchantRequest struct {
 	Name        string
 	Email       string
