@@ -2,9 +2,12 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"go-payment-aggregator/internal/domain"
 	"go-payment-aggregator/internal/pkg"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type merchantUC struct {
@@ -27,6 +30,11 @@ func (u *merchantUC) ValidateApiKey(ctx context.Context, apiKey string) (*domain
 	merchant, err := u.merchantRepo.FindByApiKey(ctx, apiKeyHash)
 	if err != nil {
 		return nil, err
+	}
+
+	// check if merchant is active
+	if merchant.Status != domain.MerchantStatusActive {
+		return nil, errors.New("merchant is not active")
 	}
 
 	return merchant, nil
@@ -72,5 +80,14 @@ func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantReq
 
 	}
 
+	return merchant, nil
+}
+
+func (u *merchantUC) GetProfile(ctx context.Context, id uuid.UUID) (*domain.Merchant, error) {
+	// find merchant by ID
+	merchant, err := u.merchantRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
 	return merchant, nil
 }

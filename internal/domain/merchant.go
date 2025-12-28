@@ -40,6 +40,7 @@ type MerchantRepository interface {
 // Interfaces for Usecase
 type MerchantUC interface {
 	Register(ctx context.Context, req *RegisterMerchantRequest) (*Merchant, error)
+	GetProfile(ctx context.Context, id uuid.UUID) (*Merchant, error)
 	ValidateApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 }
 

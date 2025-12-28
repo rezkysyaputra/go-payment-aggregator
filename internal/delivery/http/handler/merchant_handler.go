@@ -48,3 +48,34 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 	// send success response
 	response.Success(c, http.StatusCreated, "success", "merchant created successfully", data)
 }
+
+func (h *MerchantHandler) Get(c *gin.Context) {
+	// get merchant from context
+	merchantData, exists := c.Get("merchant")
+	if !exists {
+		response.Error(c, http.StatusUnauthorized, "unauthorized", "")
+	}
+
+	// type assert merchant data
+	merchant := merchantData.(*domain.Merchant)
+
+	// get fresh merchant profile
+	ctx := c.Request.Context()
+	freshMerchant, err := h.merchantUC.GetProfile(ctx, merchant.ID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "error", "failed to get profile")
+	}
+
+	// prepare response data
+	data := response.GetMerchantResponse{
+		ID:          freshMerchant.ID.String(),
+		Name:        freshMerchant.Name,
+		Email:       freshMerchant.Email,
+		Status:      string(freshMerchant.Status),
+		Balance:     freshMerchant.Balance,
+		CallbackURL: freshMerchant.CallbackURL,
+	}
+
+	// send success response
+	response.Success(c, http.StatusOK, "success", "merchant profile retrieved successfully", data)
+}
