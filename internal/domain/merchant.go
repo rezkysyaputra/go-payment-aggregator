@@ -36,6 +36,7 @@ type MerchantRepository interface {
 	Update(ctx context.Context, m *Merchant) error
 	FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*Merchant, error)
+	RegenerateApiKey(ctx context.Context, id uuid.UUID, newApiKey string) error
 }
 
 // Interfaces for Usecase
@@ -44,6 +45,7 @@ type MerchantUC interface {
 	GetProfile(ctx context.Context, id uuid.UUID) (*Merchant, error)
 	UpdateProfile(ctx context.Context, id uuid.UUID, req *UpdateMerchantRequest) (*Merchant, error)
 	ValidateApiKey(ctx context.Context, apiKey string) (*Merchant, error)
+	RegenerateApiKey(ctx context.Context, id uuid.UUID) (string, error)
 }
 
 // Request structs

@@ -93,3 +93,11 @@ func (r *merchantRepository) FindByID(ctx context.Context, id uuid.UUID) (*domai
 	}
 	return model.toDomain(), nil
 }
+
+// RegenerateApiKey updates the API key for a merchant
+func (r *merchantRepository) RegenerateApiKey(ctx context.Context, id uuid.UUID, newApiKey string) error {
+	if err := r.db.WithContext(ctx).Model(MerchantModel{}).Where("id = ?", id).Update("api_key = ?", newApiKey).Error; err != nil {
+		return err
+	}
+	return nil
+}

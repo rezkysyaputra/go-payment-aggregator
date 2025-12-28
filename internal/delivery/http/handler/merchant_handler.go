@@ -46,14 +46,14 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 	}
 
 	// send success response
-	response.Success(c, http.StatusCreated, "success", "merchant created successfully", data)
+	response.Success(c, http.StatusCreated, "success", "Merchant created successfully", data)
 }
 
 func (h *MerchantHandler) Get(c *gin.Context) {
 	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
-		response.Error(c, http.StatusUnauthorized, "unauthorized", "merchant not found in context")
+		response.Error(c, http.StatusUnauthorized, "unauthorized", "Merchant not found in context")
 		return
 	}
 
@@ -64,7 +64,7 @@ func (h *MerchantHandler) Get(c *gin.Context) {
 	ctx := c.Request.Context()
 	freshMerchant, err := h.merchantUC.GetProfile(ctx, merchant.ID)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "error", "failed to get profile")
+		response.Error(c, http.StatusInternalServerError, "error", "Failed to get profile")
 		return
 	}
 
@@ -81,14 +81,14 @@ func (h *MerchantHandler) Get(c *gin.Context) {
 	}
 
 	// send success response
-	response.Success(c, http.StatusOK, "success", "merchant profile retrieved successfully", data)
+	response.Success(c, http.StatusOK, "success", "Merchant profile retrieved successfully", data)
 }
 
 func (h *MerchantHandler) Update(c *gin.Context) {
 	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
-		response.Error(c, http.StatusUnauthorized, "unauthorized", "merchant not found in context")
+		response.Error(c, http.StatusUnauthorized, "unauthorized", "Merchant not found in context")
 		return
 	}
 
@@ -106,7 +106,7 @@ func (h *MerchantHandler) Update(c *gin.Context) {
 	ctx := c.Request.Context()
 	updateMerchant, err := h.merchantUC.UpdateProfile(ctx, merchant.ID, &req)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "error", "failed to update profile")
+		response.Error(c, http.StatusInternalServerError, "error", "Failed to update profile")
 		return
 	}
 
@@ -123,5 +123,30 @@ func (h *MerchantHandler) Update(c *gin.Context) {
 	}
 
 	// send success response
-	response.Success(c, http.StatusOK, "success", "merchant profile updated successfully", data)
+	response.Success(c, http.StatusOK, "success", "Merchant profile updated successfully", data)
+}
+
+func (h *MerchantHandler) RegenerateApiKey(c *gin.Context) {
+	// get merchant from context
+	merchantData, exists := c.Get("merchant")
+	if !exists {
+		response.Error(c, http.StatusUnauthorized, "unauthorized", "Merchant not found in context")
+		return
+	}
+
+	// type assert merchant data
+	merchant := merchantData.(*domain.Merchant)
+
+	// call usecase to regenerate API key
+	ctx := c.Request.Context()
+	newApiKey, err := h.merchantUC.RegenerateApiKey(ctx, merchant.ID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "error", "Failed to regenerate API key")
+		return
+	}
+
+	// send success response
+	response.Success(c, http.StatusOK, "success", "API key regenerated successfully", &response.GenerateApiKeyResponse{
+		ApiKey: newApiKey,
+	})
 }

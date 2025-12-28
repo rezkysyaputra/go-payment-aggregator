@@ -117,3 +117,21 @@ func (u *merchantUC) UpdateProfile(ctx context.Context, id uuid.UUID, req *domai
 
 	return merchant, nil
 }
+
+func (u *merchantUC) RegenerateApiKey(ctx context.Context, id uuid.UUID) (string, error) {
+	// generate new ApiKey
+	newApiKey, err := pkg.GenerateApiKey("mch")
+	if err != nil {
+		return "", err
+	}
+
+	// hash new ApiKey
+	newApiKeyHash := pkg.HashKey(newApiKey)
+
+	// update api key in repository
+	if err := u.merchantRepo.RegenerateApiKey(ctx, id, newApiKeyHash); err != nil {
+		return "", err
+	}
+
+	return newApiKey, nil
+}
