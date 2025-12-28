@@ -7,19 +7,19 @@ import (
 	"time"
 )
 
-type merchantUsecase struct {
+type merchantUC struct {
 	merchantRepo domain.MerchantRepository
 	timeout      time.Duration
 }
 
-func NewMerchantUsecase(r domain.MerchantRepository, t time.Duration) domain.MerchantUsecase {
-	return &merchantUsecase{
+func NewMerchantUC(r domain.MerchantRepository, t time.Duration) domain.MerchantUC {
+	return &merchantUC{
 		merchantRepo: r,
 		timeout:      t,
 	}
 }
 
-func (u *merchantUsecase) Register(c context.Context, req *domain.RegisterMerchantRequest) (*domain.Merchant, error) {
+func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantRequest) (*domain.Merchant, error) {
 	// create context with timeout
 	ctx, cancel := context.WithTimeout(c, u.timeout)
 	defer cancel()

@@ -9,12 +9,12 @@ import (
 )
 
 type MerchantHandler struct {
-	merchantUsecase domain.MerchantUsecase
+	merchantUC domain.MerchantUC
 }
 
-func NewMerchantHandler(usecase domain.MerchantUsecase) *MerchantHandler {
+func NewMerchantHandler(usecase domain.MerchantUC) *MerchantHandler {
 	return &MerchantHandler{
-		merchantUsecase: usecase,
+		merchantUC: usecase,
 	}
 }
 
@@ -29,7 +29,7 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 
 	// call usecase to register merchant
 	ctx := c.Request.Context()
-	merchant, err := h.merchantUsecase.Register(ctx, &req)
+	merchant, err := h.merchantUC.Register(ctx, &req)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "error", err.Error())
 		return

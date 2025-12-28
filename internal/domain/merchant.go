@@ -38,7 +38,7 @@ type MerchantRepository interface {
 }
 
 // Interfaces for Usecase
-type MerchantUsecase interface {
+type MerchantUC interface {
 	Register(ctx context.Context, req *RegisterMerchantRequest) (*Merchant, error)
 }
 
