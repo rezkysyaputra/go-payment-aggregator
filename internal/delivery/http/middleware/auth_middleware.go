@@ -23,7 +23,7 @@ func (m *AuthMiddleware) RequireApiKey() gin.HandlerFunc {
 		apiKey := c.GetHeader("X-API-KEY")
 
 		if apiKey == "" {
-			response.Error(c, http.StatusUnauthorized, "unauthorized", "missing api key")
+			response.Error(c, http.StatusUnauthorized, "unauthorized", "Missing API key")
 			c.Abort()
 			return
 		}
@@ -31,7 +31,7 @@ func (m *AuthMiddleware) RequireApiKey() gin.HandlerFunc {
 		ctx := c.Request.Context()
 		merchant, err := m.merchantUC.ValidateApiKey(ctx, apiKey)
 		if err != nil {
-			response.Error(c, http.StatusUnauthorized, "unauthorized", "invalid api key")
+			response.Error(c, http.StatusUnauthorized, "unauthorized", "Invalid API key")
 			c.Abort()
 			return
 		}
