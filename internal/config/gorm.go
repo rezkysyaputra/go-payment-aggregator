@@ -59,3 +59,6 @@ type logrusWriter struct {
 func (l *logrusWriter) Printf(message string, args ...any) {
 	l.Logger.Tracef(message, args...)
 }
+
+// migrate -path ./database/migrations -database "postgres://postgres:postgres@localhost:5432/payment_aggregator?sslmode=disable" up
+// migrate -path ./database/migrations -database "postgres://postgres:postgres@localhost:5432/payment_aggregator?sslmode=disable" down
