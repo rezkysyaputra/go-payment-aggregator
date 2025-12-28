@@ -67,6 +67,15 @@ func (r *merchantRepository) Create(ctx context.Context, m *domain.Merchant) err
 	return nil
 }
 
+// Update modifies an existing merchant in the database
+func (r *merchantRepository) Update(ctx context.Context, m *domain.Merchant) error {
+	model := toMerchantModel(m)
+	if err := r.db.WithContext(ctx).Save(model).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 // FindByApiKey retrieves a merchant by its API key
 func (r *merchantRepository) FindByApiKey(ctx context.Context, apiKey string) (*domain.Merchant, error) {
 	var model MerchantModel

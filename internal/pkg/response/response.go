@@ -1,6 +1,8 @@
 package response
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,10 +41,12 @@ type RegisterMerchantResponse struct {
 }
 
 type GetMerchantResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	Status      string `json:"status"`
-	Balance     int64  `json:"balance"`
-	CallbackURL string `json:"callback_url"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Email       string    `json:"email"`
+	Status      string    `json:"status"`
+	Balance     int64     `json:"balance"`
+	CallbackURL string    `json:"callback_url"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

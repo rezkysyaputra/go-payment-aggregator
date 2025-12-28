@@ -91,3 +91,29 @@ func (u *merchantUC) GetProfile(ctx context.Context, id uuid.UUID) (*domain.Merc
 	}
 	return merchant, nil
 }
+
+func (u *merchantUC) UpdateProfile(ctx context.Context, id uuid.UUID, req *domain.UpdateMerchantRequest) (*domain.Merchant, error) {
+	// find merchant by ID
+	merchant, err := u.merchantRepo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// update fields
+	if req.Name != "" {
+		merchant.Name = req.Name
+	}
+
+	if req.CallbackURL != "" {
+		merchant.CallbackURL = req.CallbackURL
+	}
+
+	merchant.UpdatedAt = time.Now()
+
+	// save updates to repository
+	if err := u.merchantRepo.Update(ctx, merchant); err != nil {
+		return nil, err
+	}
+
+	return merchant, nil
+}

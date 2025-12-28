@@ -33,6 +33,7 @@ type Merchant struct {
 // Interfaces for Repository
 type MerchantRepository interface {
 	Create(ctx context.Context, m *Merchant) error
+	Update(ctx context.Context, m *Merchant) error
 	FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*Merchant, error)
 }
@@ -41,6 +42,7 @@ type MerchantRepository interface {
 type MerchantUC interface {
 	Register(ctx context.Context, req *RegisterMerchantRequest) (*Merchant, error)
 	GetProfile(ctx context.Context, id uuid.UUID) (*Merchant, error)
+	UpdateProfile(ctx context.Context, id uuid.UUID, req *UpdateMerchantRequest) (*Merchant, error)
 	ValidateApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 }
 
@@ -48,5 +50,10 @@ type MerchantUC interface {
 type RegisterMerchantRequest struct {
 	Name        string
 	Email       string
+	CallbackURL string
+}
+
+type UpdateMerchantRequest struct {
+	Name        string
 	CallbackURL string
 }

@@ -53,7 +53,8 @@ func (h *MerchantHandler) Get(c *gin.Context) {
 	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
-		response.Error(c, http.StatusUnauthorized, "unauthorized", "")
+		response.Error(c, http.StatusUnauthorized, "unauthorized", "merchant not found in context")
+		return
 	}
 
 	// type assert merchant data
@@ -64,6 +65,7 @@ func (h *MerchantHandler) Get(c *gin.Context) {
 	freshMerchant, err := h.merchantUC.GetProfile(ctx, merchant.ID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "error", "failed to get profile")
+		return
 	}
 
 	// prepare response data
@@ -74,8 +76,52 @@ func (h *MerchantHandler) Get(c *gin.Context) {
 		Status:      string(freshMerchant.Status),
 		Balance:     freshMerchant.Balance,
 		CallbackURL: freshMerchant.CallbackURL,
+		CreatedAt:   freshMerchant.CreatedAt,
+		UpdatedAt:   freshMerchant.UpdatedAt,
 	}
 
 	// send success response
 	response.Success(c, http.StatusOK, "success", "merchant profile retrieved successfully", data)
+}
+
+func (h *MerchantHandler) Update(c *gin.Context) {
+	// get merchant from context
+	merchantData, exists := c.Get("merchant")
+	if !exists {
+		response.Error(c, http.StatusUnauthorized, "unauthorized", "merchant not found in context")
+		return
+	}
+
+	// type assert merchant data
+	merchant := merchantData.(*domain.Merchant)
+
+	// bind JSON request
+	var req domain.UpdateMerchantRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "error", err.Error())
+		return
+	}
+
+	// call usecase to update profile
+	ctx := c.Request.Context()
+	updateMerchant, err := h.merchantUC.UpdateProfile(ctx, merchant.ID, &req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "error", "failed to update profile")
+		return
+	}
+
+	// prepare response data
+	data := response.GetMerchantResponse{
+		ID:          updateMerchant.ID.String(),
+		Name:        updateMerchant.Name,
+		Email:       updateMerchant.Email,
+		Status:      string(updateMerchant.Status),
+		Balance:     updateMerchant.Balance,
+		CallbackURL: updateMerchant.CallbackURL,
+		CreatedAt:   updateMerchant.CreatedAt,
+		UpdatedAt:   updateMerchant.UpdatedAt,
+	}
+
+	// send success response
+	response.Success(c, http.StatusOK, "success", "merchant profile updated successfully", data)
 }

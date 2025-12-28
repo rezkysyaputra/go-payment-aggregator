@@ -26,6 +26,7 @@ func (c *RouteConfig) SetupRoutes() {
 		{
 			merchant.POST("", c.MerchantHandler.Register)
 			merchant.GET("/profile", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.Get)
+			merchant.PUT("/profile", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.Update)
 		}
 	}
 }
