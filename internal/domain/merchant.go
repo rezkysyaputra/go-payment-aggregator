@@ -32,7 +32,7 @@ type Merchant struct {
 
 // Interfaces for Repository
 type MerchantRepository interface {
-	Create(ctx context.Context, m *Merchant) error
+	Create(ctx context.Context, m *Merchant) (*Merchant, error)
 	Update(ctx context.Context, m *Merchant) error
 	FindByApiKey(ctx context.Context, apiKey string) (*Merchant, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*Merchant, error)

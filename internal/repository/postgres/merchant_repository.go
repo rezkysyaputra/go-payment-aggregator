@@ -66,12 +66,12 @@ func NewMerchantRepository(db *gorm.DB) domain.MerchantRepository {
 }
 
 // Create inserts a new merchant into the database
-func (r *merchantRepository) Create(ctx context.Context, m *domain.Merchant) error {
+func (r *merchantRepository) Create(ctx context.Context, m *domain.Merchant) (*domain.Merchant, error) {
 	model := toMerchantModel(m)
 	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return model.toDomain(), nil
 }
 
 // Update modifies an existing merchant in the database

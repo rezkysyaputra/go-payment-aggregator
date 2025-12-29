@@ -70,17 +70,18 @@ func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantReq
 		CallbackURL: req.CallbackURL,
 		Status:      domain.MerchantStatusActive,
 		Balance:     0,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
 	}
 
 	// save to repository
-	if err := u.merchantRepo.Create(ctx, merchant); err != nil {
+	createdMerchant, err := u.merchantRepo.Create(ctx, merchant)
+	if err != nil {
 		return nil, err
-
 	}
 
-	return merchant, nil
+	// set merchant ApiKey for response
+	createdMerchant.ApiKey = apiKey
+
+	return createdMerchant, nil
 }
 
 func (u *merchantUC) GetProfile(ctx context.Context, id uuid.UUID) (*domain.Merchant, error) {
