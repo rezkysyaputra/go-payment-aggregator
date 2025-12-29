@@ -56,3 +56,19 @@ type GetMerchantResponse struct {
 type GenerateApiKeyResponse struct {
 	ApiKey string `json:"api_key"`
 }
+
+type CreateTransactionResponse struct {
+	ID            string    `json:"id"`
+	MerchantID    string    `json:"merchant_id"`
+	OrderID       string    `json:"order_id"`
+	Provider      string    `json:"provider"`
+	Currency      string    `json:"currency"`
+	Amount        int64     `json:"amount"`
+	Status        string    `json:"status"`
+	PaymentMethod string    `json:"payment_method"`
+	PaymentURL    string    `json:"payment_url"`
+	ExternalID    string    `json:"external_id"`
+	ExpiredAt     time.Time `json:"expired_at"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,4 +31,20 @@ type Transaction struct {
 	ExpiredAt     time.Time         `json:"expired_at"`
 	CreatedAt     time.Time         `json:"created_at"`
 	UpdatedAt     time.Time         `json:"updated_at"`
+}
+
+type TransactionRepository interface {
+	Create(ctx context.Context, tx *Transaction) (*Transaction, error)
+}
+
+type TransactionUC interface {
+	Create(ctx context.Context, merchantID uuid.UUID, req *CreateTransactionRequest) (*Transaction, error)
+}
+
+type CreateTransactionRequest struct {
+	OrderID       string `json:"order_id"`
+	Amount        int64  `json:"amount"`
+	Provider      string `json:"provider"`
+	Currency      string `json:"currency"`
+	PaymentMethod string `json:"payment_method"`
 }

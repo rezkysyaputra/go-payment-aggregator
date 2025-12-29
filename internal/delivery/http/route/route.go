@@ -8,9 +8,10 @@ import (
 )
 
 type RouteConfig struct {
-	App             *gin.Engine
-	MerchantHandler *handler.MerchantHandler
-	AuthMiddleware  *middleware.AuthMiddleware
+	App                *gin.Engine
+	MerchantHandler    *handler.MerchantHandler
+	TransactionHandler *handler.TransactionHandler
+	AuthMiddleware     *middleware.AuthMiddleware
 }
 
 func (c *RouteConfig) Setup() {
@@ -22,12 +23,17 @@ func (c *RouteConfig) Setup() {
 func (c *RouteConfig) SetupRoutes() {
 	v1 := c.App.Group("/api/v1")
 	{
-		merchant := v1.Group("/merchants")
+		m := v1.Group("/merchants")
 		{
-			merchant.POST("", c.MerchantHandler.Register)
-			merchant.GET("/profile", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.Get)
-			merchant.PUT("/profile", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.Update)
-			merchant.POST("/api-key/regenerate", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.RegenerateApiKey)
+			m.POST("", c.MerchantHandler.Register)
+			m.GET("/profile", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.Get)
+			m.PUT("/profile", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.Update)
+			m.POST("/api-key/regenerate", c.AuthMiddleware.RequireApiKey(), c.MerchantHandler.RegenerateApiKey)
+		}
+
+		t := v1.Group("/transactions")
+		{
+			t.POST("", c.AuthMiddleware.RequireApiKey(), c.TransactionHandler.Create)
 		}
 	}
 }
