@@ -4,12 +4,14 @@ import (
 	"go-payment-aggregator/internal/delivery/http/handler"
 	"go-payment-aggregator/internal/delivery/http/middleware"
 	"go-payment-aggregator/internal/delivery/http/route"
+	"go-payment-aggregator/internal/gateway"
 	"go-payment-aggregator/internal/repository/postgres"
 	"go-payment-aggregator/internal/usecase"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/midtrans/midtrans-go"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -60,20 +62,42 @@ func Bootstrap(config *BootstrapConfig) {
 	// setup router
 	// router.SetupRouter(config.App, *merchantHandler, *transactionHandler, merchantRepo, *webhookHandler, config.Log)
 
+	// setup midtrans gateway
+	var midtransEnv midtrans.EnvironmentType
+	if config.Config.GetString("midtrans.environment") == "production" {
+		midtransEnv = midtrans.Production
+	} else {
+		midtransEnv = midtrans.Sandbox
+	}
+
+	mtConfig := gateway.MidtransConfig{
+		ServerKey: config.Config.GetString("midtrans.server_key"),
+		Env:       midtransEnv,
+	}
+
+	midtransGateway := gateway.NewMidtransGateway(mtConfig)
+
 	// setup repositories
 	merchantRepository := postgres.NewMerchantRepository(config.DB)
+	transactionRepository := postgres.NewTransactionRepository(config.DB)
+
 	// setup usecases
-	merchantUsecase := usecase.NewMerchantUC(merchantRepository, time.Second*2) // for now set hardcoded timeout to 2 seconds
+	merchantUsecase := usecase.NewMerchantUC(merchantRepository, time.Second*2)                           // for now set hardcoded timeout to 2 seconds
+	transactionUsecase := usecase.NewTransactionUC(transactionRepository, midtransGateway, time.Second*5) // for now set hardcoded timeout to 5 seconds
+
 	// setup handlers
 	merchantHandler := handler.NewMerchantHandler(merchantUsecase)
+	transactionHandler := handler.NewTransactionHandler(transactionUsecase)
+
 	// setup auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(merchantUsecase)
 
 	// router setup
 	routeConfig := &route.RouteConfig{
-		App:             config.App,
-		MerchantHandler: merchantHandler,
-		AuthMiddleware:  authMiddleware,
+		App:                config.App,
+		MerchantHandler:    merchantHandler,
+		TransactionHandler: transactionHandler,
+		AuthMiddleware:     authMiddleware,
 	}
 
 	routeConfig.Setup()
