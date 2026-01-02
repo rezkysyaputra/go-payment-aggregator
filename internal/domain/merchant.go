@@ -50,13 +50,13 @@ type MerchantUC interface {
 
 // Request structs
 type RegisterMerchantRequest struct {
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	CallbackURL string `json:"callback_url"`
+	Name        string `json:"name" validate:"required,min=3"`
+	Email       string `json:"email" validate:"required,email"`
+	CallbackURL string `json:"callback_url" validate:"required,url"`
 }
 
 // UpdateMerchantRequest struct
 type UpdateMerchantRequest struct {
-	Name        string `json:"name"`
-	CallbackURL string `json:"callback_url"`
+	Name        string `json:"name" validate:"omitempty,min=3"`
+	CallbackURL string `json:"callback_url" validate:"omitempty,url"`
 }
