@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"go-payment-aggregator/internal/domain"
+	"go-payment-aggregator/internal/pkg"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,7 +44,7 @@ func toTransactionModel(tx *domain.Transaction) *TransactionModel {
 		ExternalRef:   tx.ExternalID,
 		PaymentMethod: tx.PaymentMethod,
 		RedirectURL:   tx.PaymentURL,
-		RawResponse:   []byte(tx.RawResponse),
+		RawResponse:   pkg.JsonToByte(tx.RawResponse),
 		ExpiredAt:     tx.ExpiredAt,
 		CreatedAt:     tx.CreatedAt,
 		UpdatedAt:     tx.UpdatedAt,
@@ -82,7 +83,24 @@ func NewTransactionRepository(db *gorm.DB) domain.TransactionRepository {
 
 func (t *transactionRepository) Create(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error) {
 	model := toTransactionModel(tx)
+	model.RawResponse = nil
 	if err := t.db.WithContext(ctx).Create(model).Error; err != nil {
+		return nil, err
+	}
+	return model.toDomain(), nil
+}
+
+func (t *transactionRepository) Update(ctx context.Context, tx *domain.Transaction) (*domain.Transaction, error) {
+	model := toTransactionModel(tx)
+
+	updateData := map[string]interface{}{
+		"redirect_url": model.RedirectURL,
+		"external_ref": model.ExternalRef,
+		"raw_response": model.RawResponse,
+		"expired_at":   model.ExpiredAt,
+	}
+
+	if err := t.db.WithContext(ctx).Model(&TransactionModel{}).Where("id = ?", model.ID).Updates(updateData).Error; err != nil {
 		return nil, err
 	}
 	return model.toDomain(), nil

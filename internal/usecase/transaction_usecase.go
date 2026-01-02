@@ -11,12 +11,14 @@ import (
 
 type TransactionUC struct {
 	transactionRepo domain.TransactionRepository
+	gateway         domain.PaymentGateway
 	timeout         time.Duration
 }
 
-func NewTransactionUC(r domain.TransactionRepository, t time.Duration) domain.TransactionUC {
+func NewTransactionUC(r domain.TransactionRepository, g domain.PaymentGateway, t time.Duration) domain.TransactionUC {
 	return &TransactionUC{
 		transactionRepo: r,
+		gateway:         g,
 		timeout:         t,
 	}
 }
@@ -32,6 +34,8 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		return nil, err
 	}
 
+	expiryDuration := time.Minute * 2
+
 	transaction := &domain.Transaction{
 		ID:            id,
 		MerchantID:    merchantID,
@@ -39,8 +43,9 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		Provider:      req.Provider,
 		Amount:        req.Amount,
 		Currency:      req.Currency,
-		PaymentMethod: req.PaymentMethod,
 		Status:        domain.TransactionStatusPending,
+		PaymentMethod: req.PaymentMethod,
+		ExpiredAt:     time.Now().Add(expiryDuration),
 	}
 
 	// save transaction to repository
@@ -48,5 +53,37 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 	if err != nil {
 		return nil, err
 	}
-	return createdTransaction, nil
+
+	// prepare payment request
+	paymentRequest := &domain.CreatePaymentRequest{
+		OrderID:       createdTransaction.OrderID,
+		Amount:        createdTransaction.Amount,
+		PaymentMethod: createdTransaction.PaymentMethod,
+		ExpiryMinutes: int64(time.Until(transaction.ExpiredAt).Minutes()),
+		Customer:      req.Customer,
+		Items:         req.Items,
+	}
+
+	// process payment via gateway
+	paymentResponse, err := u.gateway.CreatePayment(paymentRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	rawJsonResponse, err := pkg.ToJSON(paymentResponse)
+	if err != nil {
+		return nil, err
+	}
+	// update transaction with payment details
+	createdTransaction.PaymentURL = paymentResponse.PaymentURL
+	createdTransaction.ExternalID = paymentResponse.Token
+	createdTransaction.RawResponse = string(rawJsonResponse)
+
+	// save updated transaction to repository
+	updatedTransaction, err := u.transactionRepo.Update(ctx, createdTransaction)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedTransaction, nil
 }
