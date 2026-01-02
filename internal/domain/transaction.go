@@ -35,16 +35,30 @@ type Transaction struct {
 
 type TransactionRepository interface {
 	Create(ctx context.Context, tx *Transaction) (*Transaction, error)
+	Update(ctx context.Context, tx *Transaction) (*Transaction, error)
 }
 
 type TransactionUC interface {
 	Create(ctx context.Context, merchantID uuid.UUID, req *CreateTransactionRequest) (*Transaction, error)
 }
 
+type Customer struct {
+	Name  string `json:"name" validate:"required,min=3"`
+	Email string `json:"email" validate:"required,email"`
+}
+
+type Item struct {
+	Name     string `json:"name" validate:"required"`
+	Quantity int32  `json:"quantity" validate:"required,min=1"`
+	Price    int64  `json:"price" validate:"required,min=1"`
+}
+
 type CreateTransactionRequest struct {
-	OrderID       string `json:"order_id"`
-	Amount        int64  `json:"amount"`
-	Provider      string `json:"provider"`
-	Currency      string `json:"currency"`
-	PaymentMethod string `json:"payment_method"`
+	OrderID       string   `json:"order_id" validate:"required"`
+	Amount        int64    `json:"amount" validate:"required,min=1"`
+	Provider      string   `json:"provider" validate:"required,oneof=midtrans xendit stripe"`
+	Currency      string   `json:"currency" validate:"required,len=3,uppercase"`
+	PaymentMethod string   `json:"payment_method" validate:"required"`
+	Customer      Customer `json:"customer" validate:"required"`
+	Items         []Item   `json:"items" validate:"required,dive"`
 }
