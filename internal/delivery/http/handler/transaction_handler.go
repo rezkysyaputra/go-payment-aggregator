@@ -12,7 +12,7 @@ type TransactionHandler struct {
 	transactionUC domain.TransactionUC
 }
 
-func NewTransactionUC(u domain.TransactionUC) *TransactionHandler {
+func NewTransactionHandler(u domain.TransactionUC) *TransactionHandler {
 	return &TransactionHandler{
 		transactionUC: u,
 	}
