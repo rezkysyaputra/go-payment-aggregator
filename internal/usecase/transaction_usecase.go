@@ -101,3 +101,21 @@ func (u *TransactionUC) Get(ctx context.Context, id uuid.UUID) (*domain.Transact
 
 	return getTransaction, nil
 }
+
+func (u *TransactionUC) HandleNotification(ctx context.Context, req *domain.UpdateStatusRequest) error {
+	// find transaction by order ID
+	tx, err := u.transactionRepo.FindByOrderID(ctx, req.OrderID)
+	if err != nil {
+		return err
+	}
+
+	// update transaction status
+	tx.Status = domain.TransactionStatus(req.Status)
+
+	// save updated transaction to repository
+	_, err = u.transactionRepo.Update(ctx, tx)
+	if err != nil {
+		return err
+	}
+	return nil
+}

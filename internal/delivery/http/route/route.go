@@ -8,10 +8,11 @@ import (
 )
 
 type RouteConfig struct {
-	App                *gin.Engine
-	MerchantHandler    *handler.MerchantHandler
-	TransactionHandler *handler.TransactionHandler
-	AuthMiddleware     *middleware.AuthMiddleware
+	App                    *gin.Engine
+	MerchantHandler        *handler.MerchantHandler
+	TransactionHandler     *handler.TransactionHandler
+	AuthMiddleware         *middleware.AuthMiddleware
+	MidtransWebhookHandler *handler.MidtransWebhookHandler
 }
 
 func (c *RouteConfig) Setup() {
@@ -35,6 +36,11 @@ func (c *RouteConfig) SetupRoutes() {
 		{
 			t.POST("", c.AuthMiddleware.RequireApiKey(), c.TransactionHandler.Create)
 			t.GET("/:id", c.AuthMiddleware.RequireApiKey(), c.TransactionHandler.Get)
+		}
+
+		w := v1.Group("/webhooks")
+		{
+			w.POST("/midtrans", c.MidtransWebhookHandler.Handle)
 		}
 	}
 }

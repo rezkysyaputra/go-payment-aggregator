@@ -37,11 +37,13 @@ type TransactionRepository interface {
 	Create(ctx context.Context, tx *Transaction) (*Transaction, error)
 	Update(ctx context.Context, tx *Transaction) (*Transaction, error)
 	Get(ctx context.Context, id uuid.UUID) (*Transaction, error)
+	FindByOrderID(ctx context.Context, orderID string) (*Transaction, error)
 }
 
 type TransactionUC interface {
 	Create(ctx context.Context, merchantID uuid.UUID, req *CreateTransactionRequest) (*Transaction, error)
 	Get(ctx context.Context, id uuid.UUID) (*Transaction, error)
+	HandleNotification(ctx context.Context, req *UpdateStatusRequest) error
 }
 
 type Customer struct {
@@ -63,4 +65,9 @@ type CreateTransactionRequest struct {
 	PaymentMethod string   `json:"payment_method" validate:"required"`
 	Customer      Customer `json:"customer" validate:"required"`
 	Items         []Item   `json:"items" validate:"required,dive"`
+}
+
+type UpdateStatusRequest struct {
+	OrderID string `json:"order_id" validate:"required"`
+	Status  string `json:"status" validate:"required,oneof=PAID FAILED EXPIRED"`
 }

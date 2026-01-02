@@ -92,12 +92,16 @@ func Bootstrap(config *BootstrapConfig) {
 	// setup auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(merchantUsecase)
 
+	// setup midtrans webhook handler
+	midtransWebhookHandler := handler.NewMidtransWebhookHandler(transactionUsecase, config.Config.GetString("midtrans.server_key"))
+
 	// router setup
 	routeConfig := &route.RouteConfig{
-		App:                config.App,
-		MerchantHandler:    merchantHandler,
-		TransactionHandler: transactionHandler,
-		AuthMiddleware:     authMiddleware,
+		App:                    config.App,
+		MerchantHandler:        merchantHandler,
+		TransactionHandler:     transactionHandler,
+		AuthMiddleware:         authMiddleware,
+		MidtransWebhookHandler: midtransWebhookHandler,
 	}
 
 	routeConfig.Setup()

@@ -108,7 +108,15 @@ func (t *transactionRepository) Update(ctx context.Context, tx *domain.Transacti
 
 func (t *transactionRepository) Get(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
 	var model TransactionModel
-	if err := t.db.WithContext(ctx).Model(&TransactionModel{}).First(&model, "id = ?", id).Error; err != nil {
+	if err := t.db.WithContext(ctx).Where("id = ?", id).First(&model).Error; err != nil {
+		return nil, err
+	}
+	return model.toDomain(), nil
+}
+
+func (t *transactionRepository) FindByOrderID(ctx context.Context, orderID string) (*domain.Transaction, error) {
+	var model TransactionModel
+	if err := t.db.WithContext(ctx).Where("order_id = ?", orderID).First(&model).Error; err != nil {
 		return nil, err
 	}
 	return model.toDomain(), nil
