@@ -19,3 +19,10 @@ func MapMidtransStatus(midtransStatus, fraudStatus string) string {
 		return "PENDING"
 	}
 }
+
+func VerifySignature(orderID, statusCode, grossAmount, serverKey, signatureKey string) bool {
+	signatureString := orderID + statusCode + grossAmount + serverKey
+	expectedSignature := HashKey(signatureString)
+
+	return expectedSignature == signatureKey
+}
