@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type TransactionHandler struct {
@@ -18,8 +19,7 @@ func NewTransactionHandler(u domain.TransactionUC) *TransactionHandler {
 	}
 }
 
-func (u *TransactionHandler) Create(c *gin.Context) {
-
+func (h *TransactionHandler) Create(c *gin.Context) {
 	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
@@ -39,7 +39,7 @@ func (u *TransactionHandler) Create(c *gin.Context) {
 
 	// call usecase to create transaction
 	ctx := c.Request.Context()
-	createdTransaction, err := u.transactionUC.Create(ctx, merchant.ID, &req)
+	createdTransaction, err := h.transactionUC.Create(ctx, merchant.ID, &req)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "error", err.Error())
 		return
@@ -64,4 +64,47 @@ func (u *TransactionHandler) Create(c *gin.Context) {
 
 	// send success response
 	response.Success(c, http.StatusCreated, "success", "Transaction created successfully", data)
+}
+
+func (h *TransactionHandler) Get(c *gin.Context) {
+	transactionID := c.Param("id")
+	if transactionID == "" {
+		response.Error(c, http.StatusBadRequest, "error", "Transaction ID is required")
+		return
+	}
+
+	// check if transactionID is valid UUID
+	id, err := uuid.Parse(transactionID)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "error", "Invalid transaction ID")
+		return
+	}
+
+	// call usecase to get transaction
+	ctx := c.Request.Context()
+	transaction, err := h.transactionUC.Get(ctx, id)
+	if err != nil {
+		response.Error(c, http.StatusNotFound, "error", "Transaction not found")
+		return
+	}
+
+	// prepare response data
+	data := response.CreateTransactionResponse{
+		ID:            transaction.ID.String(),
+		MerchantID:    transaction.MerchantID.String(),
+		OrderID:       transaction.OrderID,
+		Provider:      transaction.Provider,
+		Currency:      transaction.Currency,
+		Amount:        transaction.Amount,
+		Status:        string(transaction.Status),
+		PaymentMethod: transaction.PaymentMethod,
+		PaymentURL:    transaction.PaymentURL,
+		ExternalID:    transaction.ExternalID,
+		ExpiredAt:     transaction.ExpiredAt,
+		CreatedAt:     transaction.CreatedAt,
+		UpdatedAt:     transaction.UpdatedAt,
+	}
+
+	// send success response
+	response.Success(c, http.StatusOK, "success", "Transaction retrieved successfully", data)
 }

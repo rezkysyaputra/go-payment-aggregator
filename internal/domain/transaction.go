@@ -36,10 +36,12 @@ type Transaction struct {
 type TransactionRepository interface {
 	Create(ctx context.Context, tx *Transaction) (*Transaction, error)
 	Update(ctx context.Context, tx *Transaction) (*Transaction, error)
+	Get(ctx context.Context, id uuid.UUID) (*Transaction, error)
 }
 
 type TransactionUC interface {
 	Create(ctx context.Context, merchantID uuid.UUID, req *CreateTransactionRequest) (*Transaction, error)
+	Get(ctx context.Context, id uuid.UUID) (*Transaction, error)
 }
 
 type Customer struct {

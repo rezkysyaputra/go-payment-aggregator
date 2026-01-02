@@ -34,6 +34,7 @@ func (c *RouteConfig) SetupRoutes() {
 		t := v1.Group("/transactions")
 		{
 			t.POST("", c.AuthMiddleware.RequireApiKey(), c.TransactionHandler.Create)
+			t.GET("/:id", c.AuthMiddleware.RequireApiKey(), c.TransactionHandler.Get)
 		}
 	}
 }

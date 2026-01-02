@@ -87,3 +87,17 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 
 	return updatedTransaction, nil
 }
+
+func (u *TransactionUC) Get(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
+	// create context with timeout
+	ctx, cancel := context.WithTimeout(ctx, u.timeout)
+	defer cancel()
+
+	// get transaction from repository
+	getTransaction, err := u.transactionRepo.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return getTransaction, nil
+}
