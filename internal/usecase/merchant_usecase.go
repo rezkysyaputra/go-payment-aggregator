@@ -46,10 +46,7 @@ func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantReq
 	defer cancel()
 
 	// generate new UUIDV7
-	id, err := pkg.GenerateUUIDV7()
-	if err != nil {
-		return nil, err
-	}
+	id := pkg.GenerateUUIDV7()
 
 	// generate ApiKey
 	apiKey, err := pkg.GenerateApiKey("mch")

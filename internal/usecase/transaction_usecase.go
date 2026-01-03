@@ -29,10 +29,7 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 	defer cancel()
 
 	// generate UUIDV7 for transaction ID
-	id, err := pkg.GenerateUUIDV7()
-	if err != nil {
-		return nil, err
-	}
+	id := pkg.GenerateUUIDV7()
 
 	expiryDuration := time.Minute * 2
 
@@ -70,10 +67,9 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		return nil, err
 	}
 
-	rawJsonResponse, err := pkg.ToJSON(paymentResponse)
-	if err != nil {
-		return nil, err
-	}
+	// serialize raw response to JSON
+	rawJsonResponse := pkg.ToJSON(paymentResponse)
+
 	// update transaction with payment details
 	createdTransaction.PaymentURL = paymentResponse.PaymentURL
 	createdTransaction.ExternalID = paymentResponse.Token
