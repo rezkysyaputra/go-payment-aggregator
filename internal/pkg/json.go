@@ -2,8 +2,9 @@ package pkg
 
 import "encoding/json"
 
-func ToJSON(data interface{}) ([]byte, error) {
-	return json.Marshal(data)
+func ToJSON(data interface{}) []byte {
+	jsonData, _ := json.Marshal(data)
+	return jsonData
 }
 
 func JsonToByte(data string) []byte {
