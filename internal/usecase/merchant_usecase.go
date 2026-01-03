@@ -24,7 +24,7 @@ func NewMerchantUC(r domain.MerchantRepository, t time.Duration) domain.Merchant
 
 func (u *merchantUC) ValidateApiKey(ctx context.Context, apiKey string) (*domain.Merchant, error) {
 	// hash api key
-	apiKeyHash := pkg.HashKey(apiKey)
+	apiKeyHash := pkg.HashKey256(apiKey)
 
 	// find merchant by api key
 	merchant, err := u.merchantRepo.FindByApiKey(ctx, apiKeyHash)
@@ -58,7 +58,7 @@ func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantReq
 	}
 
 	// hash ApiKey
-	apiKeyHash := pkg.HashKey(apiKey)
+	apiKeyHash := pkg.HashKey256(apiKey)
 
 	// create merchant entity
 	merchant := &domain.Merchant{
@@ -127,7 +127,7 @@ func (u *merchantUC) RegenerateApiKey(ctx context.Context, id uuid.UUID) (string
 	}
 
 	// hash new ApiKey
-	newApiKeyHash := pkg.HashKey(newApiKey)
+	newApiKeyHash := pkg.HashKey256(newApiKey)
 
 	// update api key in repository
 	if err := u.merchantRepo.RegenerateApiKey(ctx, id, newApiKeyHash); err != nil {

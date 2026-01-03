@@ -22,7 +22,7 @@ func MapMidtransStatus(midtransStatus, fraudStatus string) string {
 
 func VerifySignature(orderID, statusCode, grossAmount, serverKey, signatureKey string) bool {
 	signatureString := orderID + statusCode + grossAmount + serverKey
-	expectedSignature := HashKey(signatureString)
+	expectedSignature := HashKey512(signatureString)
 
 	return expectedSignature == signatureKey
 }

@@ -3,6 +3,7 @@ package pkg
 import (
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 )
 
@@ -21,8 +22,15 @@ func GenerateApiKey(prefix string) (string, error) {
 }
 
 // HashKey hashes the given raw key using SHA-256 and returns the hexadecimal representation.
-func HashKey(rawKey string) string {
+func HashKey256(rawKey string) string {
 	hasher := sha256.New()
+	hasher.Write([]byte(rawKey))
+
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func HashKey512(rawKey string) string {
+	hasher := sha512.New()
 	hasher.Write([]byte(rawKey))
 
 	return hex.EncodeToString(hasher.Sum(nil))
