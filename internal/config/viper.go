@@ -9,13 +9,14 @@ import (
 func NewViper() *viper.Viper {
 	config := viper.New()
 
-	config.SetConfigName("config")
-	config.SetConfigType("json")
-	config.AddConfigPath("./")
-	config.AddConfigPath("../")
+	config.SetConfigFile(".env")
+	config.SetConfigType("env")
+	config.AddConfigPath(".")
+
+	config.AutomaticEnv()
 
 	if err := config.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("fatal error config file: %w", err))
+		fmt.Printf("Warning: .env file not found, relying on system environment variables: %v\n", err)
 	}
 
 	return config

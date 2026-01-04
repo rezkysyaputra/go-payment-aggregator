@@ -7,8 +7,11 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
-    volumes:
-      - ./config.docker.json:/app/config.json
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOST=db
+      - REDIS_HOST=redis
     depends_on:
       db:
         condition: service_healthy
