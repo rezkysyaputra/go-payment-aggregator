@@ -1,96 +1,173 @@
 # Go Payment Aggregator
 
-A robust, cloud-ready Payment Aggregator service dealing with multiple payment gateways (Midtrans, Xendit) through a unified API interface. Built with Golang, Clean Architecture, and reliability in mind.
+[![Go Report Card](https://goreportcard.com/badge/github.com/username/go-payment-aggregator)](https://goreportcard.com/report/github.com/username/go-payment-aggregator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/username/go-payment-aggregator)](https://golang.org/doc/devel/release.html)
+
+A robust, enterprise-grade Payment Aggregator service designed to unify multiple payment gateways (Midtrans, Xendit) under a single, standardized API. Built with **Go (Golang)**, adhering to **Clean Architecture** principles to ensure scalability, maintainability, and testability.
+
+---
+
+## 📑 Table of Contents
+
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [Usage](#-usage)
+- [API Documentation](#-api-documentation)
+- [Testing](#-testing)
+- [Project Structure](#-project-structure)
+- [License](#-license)
+
+---
 
 ## 🚀 Features
 
-*   **Multi-Gateway Support**: Seamlessly switch between **Midtrans**, **Xendit**, and **Mock** (Local Testing) providers.
-*   **Unified API**: Singe `CreateTransaction` endpoint handles logic for different providers intelligently.
-*   **Generic Webhook Handling**: Standardized webhook processing pipeline for all providers.
-*   **Merchant Notifications**: Automatically sends webhook notifications back to the merchant's `callback_url` upon payment status updates.
-*   **Duplicate Order Protection**: Prevents double-spending or duplicate transaction creation for the same Order ID.
-*   **Dockerized**: Ready to deploy with `docker-compose` including PostgreSQL database.
-*   **Modular Architecture**: Built using Hexagonal / Clean Architecture principles for maintainability.
+- **Multi-Gateway Support**: Seamless integration with **Midtrans** and **Xendit**, plus a **Mock** provider for local development and testing.
+- **Unified API Interface**: A single `CreateTransaction` endpoint intelligently routes requests to the appropriate provider.
+- **Resilient Webhook Handling**: Standardized, secure webhook processing pipeline for all providers.
+- **Merchant Callbacks**: Automatic notification system that relays payment status changes back to the merchant's registered `callback_url`.
+- **Idempotency & Safety**: Built-in duplicate order protection to prevent double-spending.
+- **Containerized**: Fully dockerized environment with PostgreSQL and Redis support for easy deployment.
+- **Observability**: Structured logging with Logrus.
+
+## 🏗 Architecture
+
+This project follows **Hexagonal Architecture (Ports and Adapters)** to decouple business logic from external concerns.
+
+```mermaid
+graph TD
+    Client[Client / Merchant] -->|HTTP Request| Handler
+    Handler -->|Call| Usecase[Usecase / Service]
+    Usecase -->|Persist| Repo[Repository (PostgreSQL)]
+    Usecase -->|Request Payment| Gateway[Payment Gateway Interface]
+    Gateway -->|Impl| Midtrans[Midtrans Adapter]
+    Gateway -->|Impl| Xendit[Xendit Adapter]
+    Gateway -->|Impl| Mock[Mock Adapter]
+```
 
 ## 🛠 Tech Stack
 
-*   **Language**: Go (Golang) 1.22+
-*   **Framework**: Gin Gonic
-*   **Database**: PostgreSQL
-*   **ORM**: GORM
-*   **Configuration**: Viper
-*   **Logging**: Logrus
-*   **Testing**: Go Test + Testify + Mocking
-
-## 📡 API Documentation
-
-The full OpenAPI (Swagger) specification is available in `api/openapi.json`.
-
-### Core Endpoints
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/v1/merchant/register` | Register a new merchant & get API Key |
-| `POST` | `/v1/transaction` | Create a new payment transaction |
-| `GET` | `/v1/transaction/{id}` | Get transaction details by System ID |
-| `GET` | `/v1/transaction/order/{order_id}` | Get transaction details by Order ID |
-
-### Supported Providers
-*   `midtrans`: Uses Midtrans Snap
-*   `xendit`: Uses Xendit Invoice
-*   `mock`: Local simulation for testing
+- **Core**: Go 1.25+
+- **Web Framework**: Gin Gonic
+- **Database**: PostgreSQL
+- **Caching**: Redis (Supported in config)
+- **ORM**: GORM
+- **Configuration**: Viper
+- **Logging**: Logrus
+- **Testing**: Testify (Suite, Assert, Mock)
+- **Containerization**: Docker & Docker Compose
 
 ## 💻 Getting Started
 
 ### Prerequisites
-*   Docker & Docker Compose
-*   Go 1.22+ (for local development)
+
+- [Go](https://golang.org/dl/) 1.25 or higher
+- [Docker](https://www.docker.com/products/docker-desktop) & Docker Compose
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/username/go-payment-aggregator.git
+    cd go-payment-aggregator
+    ```
+
+2.  **Setup Configuration**
+    Copy the example configuration file.
+    ```bash
+    cp .env.example .env
+    ```
 
 ### Configuration
-1.  Copy `config_example.json` to `config.docker.json` (for Docker) or `config.json` (for Local).
-    ```bash
-    cp config_example.json config.json
-    ```
-2.  Fill in your API Keys:
-    ```json
-    "midtrans": { "server_key": "YOUR_SB_KEY" },
-    "xendit": { "api_key": "YOUR_SECRET_KEY", "callback_token": "YOUR_TOKEN" }
-    ```
+
+Edit `.env` with your credentials.
+
+| Key | Description | Default |
+| :--- | :--- | :--- |
+| `APP_NAME` | Application Name | `go-payment-aggregator` |
+| `SERVER_PORT` | HTTP Port | `8080` |
+| `DATABASE_*` | Database connection details | - |
+| `MIDTRANS_SERVER_KEY` | Midtrans Server Key | - |
+| `XENDIT_API_KEY` | Xendit Secret API Key | - |
+
+## 🚀 Usage
 
 ### Running with Docker (Recommended)
+
+The easiest way to run the application is using Docker Compose. This will start the API server and the PostgreSQL database.
+
 ```bash
 docker-compose up -d --build
 ```
-The API will be available at `http://localhost:8080`.
+
+The API will be accessible at `http://localhost:8080`.
 
 ### Running Locally
-1.  Start Database:
+
+1.  **Start Dependencies (DB)**
     ```bash
-    docker-compose up -d db migrate
+    docker-compose up -d db
     ```
-2.  Run App:
+
+2.  **Run Migrations**
+    ```bash
+    # Ensure migrations are applied (adjust command based on your setup)
+    # Example: migrate -path database/migrations -database "postgresql://..." up
+    ```
+
+3.  **Start the Server**
     ```bash
     go run cmd/server/main.go
     ```
 
+## 📡 API Documentation
+
+The API follows RESTful conventions. A full OpenAPI specification is provided in `api/openapi.json`.
+
+### Key Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/v1/merchant/register` | Register a new merchant to get an API Key. |
+| `POST` | `/v1/transaction` | Create a new transaction (supports `midtrans`, `xendit`, `mock`). |
+| `GET` | `/v1/transaction/{id}` | Retrieve transaction status by System ID. |
+| `POST` | `/v1/webhook/midtrans` | Webhook endpoint for Midtrans. |
+| `POST` | `/v1/webhook/xendit` | Webhook endpoint for Xendit. |
+
 ## 🧪 Testing
-Run unit tests including provider validations:
+
+Run the test suite to ensure everything is working correctly.
+
 ```bash
-go test ./test/... -v
+# Run all tests
+go test ./... -v
 ```
 
 ## 📂 Project Structure
+
 ```
-.
-├── api/             # API Specifications (OpenAPI)
-├── cmd/             # Entrypoints
+go-payment-aggregator/
+├── api/                # OpenAPI/Swagger definitions
+├── cmd/                # Main applications of the project
+│   ├── server/         # API Server entrypoint
+│   └── worker/         # Background worker entrypoint
 ├── internal/
-│   ├── config/      # Configuration & Bootstrap
-│   ├── domain/      # Business Logic (Entities, Repos, Services)
-│   ├── gateway/     # External Payment Gateway Implementations (Strategy Pattern)
-│   ├── handler/     # HTTP Handlers
-│   ├── middleware/  # Auth Middleware
-│   └── router/      # Gin Route Definitions
-├── migrations/      # SQL Migrations
-└── test/            # Integration/Unit Tests
+│   ├── config/         # Configuration loading
+│   ├── delivery/       # HTTP Handlers, Middleware, Routes
+│   ├── domain/         # Business entities and interfaces (Core)
+│   ├── gateway/        # 3rd Party API Adapters (Midtrans, Xendit)
+│   ├── repository/     # Database implementations
+│   └── usecase/        # Business logic implementations
+├── pkg/                # Public libraries/utilities
+└── test/               # Integration and E2E tests
 ```
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
