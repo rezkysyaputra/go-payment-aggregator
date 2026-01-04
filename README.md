@@ -1,8 +1,6 @@
 # Go Payment Aggregator
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/username/go-payment-aggregator)](https://goreportcard.com/report/github.com/username/go-payment-aggregator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/username/go-payment-aggregator)](https://golang.org/doc/devel/release.html)
 
 A robust, enterprise-grade Payment Aggregator service designed to unify multiple payment gateways (Midtrans, Xendit) under a single, standardized API. Built with **Go (Golang)**, adhering to **Clean Architecture** principles to ensure scalability, maintainability, and testability.
 
@@ -41,13 +39,13 @@ This project follows **Hexagonal Architecture (Ports and Adapters)** to decouple
 
 ```mermaid
 graph TD
-    Client[Client / Merchant] -->|HTTP Request| Handler
-    Handler -->|Call| Usecase[Usecase / Service]
-    Usecase -->|Persist| Repo[Repository (PostgreSQL)]
-    Usecase -->|Request Payment| Gateway[Payment Gateway Interface]
-    Gateway -->|Impl| Midtrans[Midtrans Adapter]
-    Gateway -->|Impl| Xendit[Xendit Adapter]
-    Gateway -->|Impl| Mock[Mock Adapter]
+    Client["Client / Merchant"] -->|HTTP Request| Handler
+    Handler -->|Call| Usecase["Usecase / Service"]
+    Usecase -->|Persist| Repo["Repository (PostgreSQL)"]
+    Usecase -->|Request Payment| Gateway["Payment Gateway Interface"]
+    Gateway -->|Impl| Midtrans["Midtrans Adapter"]
+    Gateway -->|Impl| Xendit["Xendit Adapter"]
+    Gateway -->|Impl| Mock["Mock Adapter"]
 ```
 
 ## 🛠 Tech Stack
@@ -73,7 +71,7 @@ graph TD
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/username/go-payment-aggregator.git
+    git clone https://github.com/rezkysyaputra/go-payment-aggregator.git
     cd go-payment-aggregator
     ```
 
@@ -141,11 +139,23 @@ The API follows RESTful conventions. A full OpenAPI specification is provided in
 
 ## 🧪 Testing
 
-Run the test suite to ensure everything is working correctly.
+This project includes both **Unit Tests** (for business logic) and **Integration Tests** (for end-to-end flows).
 
+### Run All Tests
 ```bash
-# Run all tests
 go test ./... -v
+```
+
+### Run Unit Tests Only
+Unit tests are located within the `internal` packages (e.g., usecases).
+```bash
+go test ./internal/... -v
+```
+
+### Run Integration Tests Only
+Integration tests are located in the `test` directory and require a running database.
+```bash
+go test ./test/... -v
 ```
 
 ## 📂 Project Structure
