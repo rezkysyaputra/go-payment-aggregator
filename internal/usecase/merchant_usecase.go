@@ -43,10 +43,7 @@ func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantReq
 
 	id := pkg.GenerateUUIDV7()
 
-	apiKey, err := pkg.GenerateApiKey("mch")
-	if err != nil {
-		return nil, err
-	}
+	apiKey := pkg.GenerateApiKey("mch")
 
 	apiKeyHash := pkg.HashKey256(apiKey)
 
@@ -103,10 +100,7 @@ func (u *merchantUC) UpdateProfile(ctx context.Context, id uuid.UUID, req *domai
 }
 
 func (u *merchantUC) RegenerateApiKey(ctx context.Context, id uuid.UUID) (string, error) {
-	newApiKey, err := pkg.GenerateApiKey("mch")
-	if err != nil {
-		return "", err
-	}
+	newApiKey := pkg.GenerateApiKey("mch")
 
 	newApiKeyHash := pkg.HashKey256(newApiKey)
 
