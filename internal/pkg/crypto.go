@@ -7,21 +7,17 @@ import (
 	"encoding/hex"
 )
 
-// GenerateApiKey generates a random API key with an optional prefix.
-func GenerateApiKey(prefix string) (string, error) {
+func GenerateApiKey(prefix string) string {
 	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
+	rand.Read(b)
 
 	if prefix == "" {
-		return hex.EncodeToString(b), nil
+		return hex.EncodeToString(b)
 	}
 
-	return prefix + "_" + hex.EncodeToString(b), nil
+	return prefix + "_" + hex.EncodeToString(b)
 }
 
-// HashKey hashes the given raw key using SHA-256 and returns the hexadecimal representation.
 func HashKey256(rawKey string) string {
 	hasher := sha256.New()
 	hasher.Write([]byte(rawKey))
