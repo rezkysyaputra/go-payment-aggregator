@@ -24,11 +24,9 @@ func NewTransactionUC(r domain.TransactionRepository, g domain.PaymentGateway, t
 }
 
 func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *domain.CreateTransactionRequest) (*domain.Transaction, error) {
-	// create context with timeout
 	ctx, cancel := context.WithTimeout(ctx, u.timeout)
 	defer cancel()
 
-	// generate UUIDV7 for transaction ID
 	id := pkg.GenerateUUIDV7()
 
 	expiryDuration := time.Minute * 2
@@ -45,13 +43,11 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		ExpiredAt:     time.Now().Add(expiryDuration),
 	}
 
-	// save transaction to repository
 	createdTransaction, err := u.transactionRepo.Create(ctx, transaction)
 	if err != nil {
 		return nil, err
 	}
 
-	// prepare payment request
 	paymentRequest := &domain.CreatePaymentRequest{
 		OrderID:       createdTransaction.OrderID,
 		Amount:        createdTransaction.Amount,
@@ -61,21 +57,17 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		Items:         req.Items,
 	}
 
-	// process payment via gateway
 	paymentResponse, err := u.gateway.CreatePayment(paymentRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	// serialize raw response to JSON
 	rawJsonResponse := pkg.ToJSON(paymentResponse)
 
-	// update transaction with payment details
 	createdTransaction.PaymentURL = paymentResponse.PaymentURL
 	createdTransaction.ExternalID = paymentResponse.Token
 	createdTransaction.RawResponse = string(rawJsonResponse)
 
-	// save updated transaction to repository
 	updatedTransaction, err := u.transactionRepo.Update(ctx, createdTransaction)
 	if err != nil {
 		return nil, err
@@ -85,11 +77,9 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 }
 
 func (u *TransactionUC) Get(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
-	// create context with timeout
 	ctx, cancel := context.WithTimeout(ctx, u.timeout)
 	defer cancel()
 
-	// get transaction from repository
 	getTransaction, err := u.transactionRepo.Get(ctx, id)
 	if err != nil {
 		return nil, err
@@ -99,16 +89,13 @@ func (u *TransactionUC) Get(ctx context.Context, id uuid.UUID) (*domain.Transact
 }
 
 func (u *TransactionUC) HandleNotification(ctx context.Context, req *domain.UpdateStatusRequest) error {
-	// find transaction by order ID
 	tx, err := u.transactionRepo.FindByOrderID(ctx, req.OrderID)
 	if err != nil {
 		return err
 	}
 
-	// update transaction status
 	tx.Status = domain.TransactionStatus(req.Status)
 
-	// save updated transaction to repository
 	_, err = u.transactionRepo.Update(ctx, tx)
 	if err != nil {
 		return err

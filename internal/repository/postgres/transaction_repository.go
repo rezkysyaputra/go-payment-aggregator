@@ -31,7 +31,6 @@ func (TransactionModel) TableName() string {
 	return "transactions"
 }
 
-// toTransactionModel converts domain.Transaction to TransactionModel
 func toTransactionModel(tx *domain.Transaction) *TransactionModel {
 	return &TransactionModel{
 		ID:            tx.ID,
@@ -51,7 +50,6 @@ func toTransactionModel(tx *domain.Transaction) *TransactionModel {
 	}
 }
 
-// toDomain converts TransactionModel to domain.Transaction
 func (t *TransactionModel) toDomain() *domain.Transaction {
 	return &domain.Transaction{
 		ID:            t.ID,

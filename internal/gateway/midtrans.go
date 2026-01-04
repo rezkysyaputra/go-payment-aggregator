@@ -32,26 +32,25 @@ func NewMidtransGateway(cfg MidtransConfig) domain.PaymentGateway {
 	}
 }
 
-func (g *MidtransGateway) CreatePayment(t *domain.CreatePaymentRequest) (*domain.PaymentResponse, error) {
-	// prepare snap request
-	req := &snap.Request{
+func (g *MidtransGateway) CreatePayment(req *domain.CreatePaymentRequest) (*domain.PaymentResponse, error) {
+	snapReq := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
-			OrderID:  t.OrderID,
-			GrossAmt: t.Amount,
+			OrderID:  req.OrderID,
+			GrossAmt: req.Amount,
 		},
 
 		CustomerDetail: &midtrans.CustomerDetails{
-			FName: t.Customer.Name,
-			Email: t.Customer.Email,
+			FName: req.Customer.Name,
+			Email: req.Customer.Email,
 		},
 
 		EnabledPayments: []snap.SnapPaymentType{
-			snap.SnapPaymentType(t.PaymentMethod),
+			snap.SnapPaymentType(req.PaymentMethod),
 		},
 
 		Items: func() *[]midtrans.ItemDetails {
 			var items []midtrans.ItemDetails
-			for _, item := range t.Items {
+			for _, item := range req.Items {
 				items = append(items, midtrans.ItemDetails{
 					Name:  item.Name,
 					Qty:   item.Quantity,
@@ -63,12 +62,11 @@ func (g *MidtransGateway) CreatePayment(t *domain.CreatePaymentRequest) (*domain
 
 		Expiry: &snap.ExpiryDetails{
 			Unit:     "minute",
-			Duration: t.ExpiryMinutes,
+			Duration: req.ExpiryMinutes,
 		},
 	}
 
-	// call midtrans snap API
-	snapResp, err := g.snapClient.CreateTransaction(req)
+	snapResp, err := g.snapClient.CreateTransaction(snapReq)
 	if err != nil {
 		return nil, err
 	}
@@ -80,13 +78,11 @@ func (g *MidtransGateway) CreatePayment(t *domain.CreatePaymentRequest) (*domain
 }
 
 func (g *MidtransGateway) CheckStatus(orderID string) (string, error) {
-	// call midtrans core API to check transaction status
 	res, err := g.coreClient.CheckTransaction(orderID)
 	if err != nil {
 		return "", err
 	}
 
-	// map midtrans status and fraud status to internal transaction status
 	finalStatus := pkg.MapMidtransStatus(res.TransactionStatus, res.FraudStatus)
 
 	return finalStatus, nil

@@ -20,24 +20,20 @@ func NewTransactionHandler(u domain.TransactionUC) *TransactionHandler {
 }
 
 func (h *TransactionHandler) Create(c *gin.Context) {
-	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
 		response.Error(c, http.StatusUnauthorized, "unauthorized", "Merchant not found in context")
 		return
 	}
 
-	// type assert merchant data
 	merchant := merchantData.(*domain.Merchant)
 
-	// bind JSON request
 	var req domain.CreateTransactionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "error", err.Error())
 		return
 	}
 
-	// call usecase to create transaction
 	ctx := c.Request.Context()
 	createdTransaction, err := h.transactionUC.Create(ctx, merchant.ID, &req)
 	if err != nil {
@@ -45,7 +41,6 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// prepare response data
 	data := response.CreateTransactionResponse{
 		ID:            createdTransaction.ID.String(),
 		MerchantID:    createdTransaction.MerchantID.String(),
@@ -62,7 +57,6 @@ func (h *TransactionHandler) Create(c *gin.Context) {
 		UpdatedAt:     createdTransaction.UpdatedAt,
 	}
 
-	// send success response
 	response.Success(c, http.StatusCreated, "success", "Transaction created successfully", data)
 }
 
@@ -73,14 +67,12 @@ func (h *TransactionHandler) Get(c *gin.Context) {
 		return
 	}
 
-	// check if transactionID is valid UUID
 	id, err := uuid.Parse(transactionID)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "error", "Invalid transaction ID")
 		return
 	}
 
-	// call usecase to get transaction
 	ctx := c.Request.Context()
 	transaction, err := h.transactionUC.Get(ctx, id)
 	if err != nil {
@@ -88,7 +80,6 @@ func (h *TransactionHandler) Get(c *gin.Context) {
 		return
 	}
 
-	// prepare response data
 	data := response.CreateTransactionResponse{
 		ID:            transaction.ID.String(),
 		MerchantID:    transaction.MerchantID.String(),
@@ -105,6 +96,5 @@ func (h *TransactionHandler) Get(c *gin.Context) {
 		UpdatedAt:     transaction.UpdatedAt,
 	}
 
-	// send success response
 	response.Success(c, http.StatusOK, "success", "Transaction retrieved successfully", data)
 }

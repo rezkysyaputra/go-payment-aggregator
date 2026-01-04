@@ -21,13 +21,11 @@ func NewMerchantHandler(usecase domain.MerchantUC) *MerchantHandler {
 func (h *MerchantHandler) Register(c *gin.Context) {
 	var req domain.RegisterMerchantRequest
 
-	// bind JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "error", err.Error())
 		return
 	}
 
-	// call usecase to register merchant
 	ctx := c.Request.Context()
 	merchant, err := h.merchantUC.Register(ctx, &req)
 	if err != nil {
@@ -35,7 +33,6 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// prepare response data
 	data := response.RegisterMerchantResponse{
 		ID:          merchant.ID.String(),
 		Name:        merchant.Name,
@@ -45,22 +42,18 @@ func (h *MerchantHandler) Register(c *gin.Context) {
 		CallbackURL: merchant.CallbackURL,
 	}
 
-	// send success response
 	response.Success(c, http.StatusCreated, "success", "Merchant created successfully", data)
 }
 
 func (h *MerchantHandler) Get(c *gin.Context) {
-	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
 		response.Error(c, http.StatusUnauthorized, "unauthorized", "Merchant not found in context")
 		return
 	}
 
-	// type assert merchant data
 	merchant := merchantData.(*domain.Merchant)
 
-	// get fresh merchant profile
 	ctx := c.Request.Context()
 	freshMerchant, err := h.merchantUC.GetProfile(ctx, merchant.ID)
 	if err != nil {
@@ -68,7 +61,6 @@ func (h *MerchantHandler) Get(c *gin.Context) {
 		return
 	}
 
-	// prepare response data
 	data := response.GetMerchantResponse{
 		ID:          freshMerchant.ID.String(),
 		Name:        freshMerchant.Name,
@@ -80,29 +72,24 @@ func (h *MerchantHandler) Get(c *gin.Context) {
 		UpdatedAt:   freshMerchant.UpdatedAt,
 	}
 
-	// send success response
 	response.Success(c, http.StatusOK, "success", "Merchant profile retrieved successfully", data)
 }
 
 func (h *MerchantHandler) Update(c *gin.Context) {
-	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
 		response.Error(c, http.StatusUnauthorized, "unauthorized", "Merchant not found in context")
 		return
 	}
 
-	// type assert merchant data
 	merchant := merchantData.(*domain.Merchant)
 
-	// bind JSON request
 	var req domain.UpdateMerchantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "error", err.Error())
 		return
 	}
 
-	// call usecase to update profile
 	ctx := c.Request.Context()
 	updateMerchant, err := h.merchantUC.UpdateProfile(ctx, merchant.ID, &req)
 	if err != nil {
@@ -110,7 +97,6 @@ func (h *MerchantHandler) Update(c *gin.Context) {
 		return
 	}
 
-	// prepare response data
 	data := response.GetMerchantResponse{
 		ID:          updateMerchant.ID.String(),
 		Name:        updateMerchant.Name,
@@ -122,22 +108,18 @@ func (h *MerchantHandler) Update(c *gin.Context) {
 		UpdatedAt:   updateMerchant.UpdatedAt,
 	}
 
-	// send success response
 	response.Success(c, http.StatusOK, "success", "Merchant profile updated successfully", data)
 }
 
 func (h *MerchantHandler) RegenerateApiKey(c *gin.Context) {
-	// get merchant from context
 	merchantData, exists := c.Get("merchant")
 	if !exists {
 		response.Error(c, http.StatusUnauthorized, "unauthorized", "Merchant not found in context")
 		return
 	}
 
-	// type assert merchant data
 	merchant := merchantData.(*domain.Merchant)
 
-	// call usecase to regenerate API key
 	ctx := c.Request.Context()
 	newApiKey, err := h.merchantUC.RegenerateApiKey(ctx, merchant.ID)
 	if err != nil {
@@ -145,7 +127,6 @@ func (h *MerchantHandler) RegenerateApiKey(c *gin.Context) {
 		return
 	}
 
-	// send success response
 	response.Success(c, http.StatusOK, "success", "API key regenerated successfully", &response.GenerateApiKeyResponse{
 		ApiKey: newApiKey,
 	})

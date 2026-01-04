@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-	// init config
 	viperConfig := config.NewViper()
 	log := config.NewLogger(viperConfig)
 	db := config.NewDatabase(viperConfig, log)
@@ -14,7 +13,6 @@ func main() {
 	app := config.NewGin()
 	redis := config.NewRedis(viperConfig, log)
 
-	// bootstrap
 	config.Bootstrap(&config.BootstrapConfig{
 		Config:   viperConfig,
 		DB:       db,
@@ -24,8 +22,7 @@ func main() {
 		Redis:    redis,
 	})
 
-	// run server
-	port := viperConfig.GetInt("server.port")
+	port := viperConfig.GetInt("APP_PORT")
 	err := app.Run(fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to start server: %v", err)

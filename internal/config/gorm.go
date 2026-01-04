@@ -12,19 +12,17 @@ import (
 )
 
 func NewDatabase(viper *viper.Viper, log *logrus.Logger) *gorm.DB {
-	// load config
-	username := viper.GetString("database.username")
-	password := viper.GetString("database.password")
-	host := viper.GetString("database.host")
-	port := viper.GetInt("database.port")
-	database := viper.GetString("database.name")
-	maxIdleConnection := viper.GetInt("database.pool.idle")
-	maxConnection := viper.GetInt("database.pool.max")
-	maxLifetimeConnection := viper.GetInt("database.pool.lifetime")
+	username := viper.GetString("DATABASE_USERNAME")
+	password := viper.GetString("DATABASE_PASSWORD")
+	host := viper.GetString("DATABASE_HOST")
+	port := viper.GetInt("DATABASE_PORT")
+	database := viper.GetString("DATABASE_NAME")
+	maxIdleConnection := viper.GetInt("DATABASE_POOL_IDLE")
+	maxConnection := viper.GetInt("DATABASE_POOL_MAX")
+	maxLifetimeConnection := viper.GetInt("DATABASE_POOL_LIFETIME")
 
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable", host, username, password, database, port)
 
-	// open connection
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.New(&logrusWriter{Logger: log}, logger.Config{
 			SlowThreshold:             time.Second * 5,

@@ -10,12 +10,11 @@ import (
 )
 
 func NewRedis(config *viper.Viper, log *logrus.Logger) *redis.Client {
-	host := config.GetString("redis.host")
-	port := config.GetInt("redis.port")
-	password := config.GetString("redis.password")
-	db := config.GetInt("redis.db")
+	host := config.GetString("REDIS_HOST")
+	port := config.GetInt("REDIS_PORT")
+	password := config.GetString("REDIS_PASSWORD")
+	db := config.GetInt("REDIS_DB")
 
-	// Fallback/Default if config missing
 	if host == "" {
 		host = "localhost"
 	}
@@ -23,14 +22,12 @@ func NewRedis(config *viper.Viper, log *logrus.Logger) *redis.Client {
 		port = 6379
 	}
 
-	// Create Redis client
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", host, port),
 		Password: password,
 		DB:       db,
 	})
 
-	// Test connection
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		log.Errorf("Failed to connect to Redis: %v", err)
 	}

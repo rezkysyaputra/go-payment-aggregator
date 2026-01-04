@@ -27,77 +27,36 @@ type BootstrapConfig struct {
 	Redis    *redis.Client
 }
 
-func Bootstrap(config *BootstrapConfig) {
-	// setup repositories
-	// merchantRepo := merchant.NewMerchantRepository(config.DB, config.Log)
-	// transactionRepo := transaction.NewTransactionRepository(config.DB, config.Log)
-
-	// // setup gateways
-	// midtransServerKey := config.Config.GetString("midtrans.server_key")
-	// midtransGateway := midtrans.NewMidtransGateway(midtransServerKey)
-
-	// mockGateway := mock.NewMockGateway()
-
-	// xenditApiKey := config.Config.GetString("xendit.api_key")
-	// xenditCallbackToken := config.Config.GetString("xendit.callback_token")
-	// xenditGateway := xendit.NewXenditGateway(xenditApiKey, xenditCallbackToken)
-
-	// gateways := map[string]gateway.PaymentGateway{
-	// 	"midtrans": midtransGateway,
-	// 	"mock":     mockGateway,
-	// 	"xendit":   xenditGateway,
-	// }
-	// // setup redis
-	// redisClient := NewRedis(config.Config, config.Log)
-
-	// // setup services
-	// merchantService := merchant.NewMerchantService(merchantRepo, config.Log)
-	// transactionService := transaction.NewTransactionService(transactionRepo, gateways, config.Config, config.Log, redisClient)
-
-	// // setup handlers
-	// merchantHandler := handler.NewMerchantHandler(merchantService, config.Log)
-	// transactionHandler := handler.NewTransactionHandler(transactionService, config.Log)
-	// webhookHandler := handler.NewWebhookHandler(transactionService, config.Log)
-
-	// setup router
-	// router.SetupRouter(config.App, *merchantHandler, *transactionHandler, merchantRepo, *webhookHandler, config.Log)
-
-	// setup midtrans gateway
+func Bootstrap(b *BootstrapConfig) {
 	var midtransEnv midtrans.EnvironmentType
-	if config.Config.GetString("midtrans.environment") == "production" {
+	if b.Config.GetString("MIDTRANS_ENVIRONMENT") == "production" {
 		midtransEnv = midtrans.Production
 	} else {
 		midtransEnv = midtrans.Sandbox
 	}
 
 	mtConfig := gateway.MidtransConfig{
-		ServerKey: config.Config.GetString("midtrans.server_key"),
+		ServerKey: b.Config.GetString("MIDTRANS_SERVER_KEY"),
 		Env:       midtransEnv,
 	}
 
 	midtransGateway := gateway.NewMidtransGateway(mtConfig)
 
-	// setup repositories
-	merchantRepository := postgres.NewMerchantRepository(config.DB)
-	transactionRepository := postgres.NewTransactionRepository(config.DB)
+	merchantRepository := postgres.NewMerchantRepository(b.DB)
+	transactionRepository := postgres.NewTransactionRepository(b.DB)
 
-	// setup usecases
-	merchantUsecase := usecase.NewMerchantUC(merchantRepository, time.Second*2)                           // for now set hardcoded timeout to 2 seconds
-	transactionUsecase := usecase.NewTransactionUC(transactionRepository, midtransGateway, time.Second*5) // for now set hardcoded timeout to 5 seconds
+	merchantUsecase := usecase.NewMerchantUC(merchantRepository, time.Second*2)
+	transactionUsecase := usecase.NewTransactionUC(transactionRepository, midtransGateway, time.Second*time.Duration(b.Config.GetInt64("CONTEXT_TIMEOUT")))
 
-	// setup handlers
 	merchantHandler := handler.NewMerchantHandler(merchantUsecase)
 	transactionHandler := handler.NewTransactionHandler(transactionUsecase)
 
-	// setup auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(merchantUsecase)
 
-	// setup midtrans webhook handler
-	midtransWebhookHandler := handler.NewMidtransWebhookHandler(transactionUsecase, config.Config.GetString("midtrans.server_key"))
+	midtransWebhookHandler := handler.NewMidtransWebhookHandler(transactionUsecase, b.Config.GetString("MIDTRANS_SERVER_KEY"))
 
-	// router setup
 	routeConfig := &route.RouteConfig{
-		App:                    config.App,
+		App:                    b.App,
 		MerchantHandler:        merchantHandler,
 		TransactionHandler:     transactionHandler,
 		AuthMiddleware:         authMiddleware,

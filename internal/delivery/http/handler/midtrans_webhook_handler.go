@@ -21,24 +21,20 @@ func NewMidtransWebhookHandler(u domain.TransactionUC, serverKey string) *Midtra
 }
 
 func (h *MidtransWebhookHandler) Handle(c *gin.Context) {
-	// bind JSON request
 	var req MidtransWebhookRequest
 	c.BindJSON(&req)
 
-	// verify signature key
 	isValidSignature := pkg.VerifySignature(req.OrderID, req.StatusCode, req.GrossAmount, h.ServerKey, req.SignatureKey)
 	if !isValidSignature {
 		c.JSON(http.StatusOK, gin.H{"status": "error", "message": "Invalid signature key"})
 		return
 	}
 
-	// prepare domain request
 	domainReq := domain.UpdateStatusRequest{
 		OrderID: req.OrderID,
 		Status:  pkg.MapMidtransStatus(req.TransactionStatus, req.FraudStatus),
 	}
 
-	// call usecase to handle notification
 	ctx := c.Request.Context()
 	err := h.transactionUC.HandleNotification(ctx, &domainReq)
 	if err != nil {

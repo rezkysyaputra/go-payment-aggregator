@@ -14,34 +14,29 @@ import (
 )
 
 func main() {
-	// Load Config
 	viperConfig := config.NewViper()
 	logger := config.NewLogger(viperConfig)
 
-	// Connect Redis
 	rdb := config.NewRedis(viperConfig, logger)
 
 	fmt.Println("Worker started. Listening for webhooks on 'webhook_queue'...")
 
 	ctx := context.Background()
 
-	// Listen for webhooks
 	for {
 		result, err := rdb.BLPop(ctx, 0*time.Second, "webhook_queue").Result()
 		if err != nil {
 			logger.Errorf("Redis connection error: %v", err)
-			time.Sleep(5 * time.Second) // Wait before retrying
+			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		// Ensure we got data
 		if len(result) < 2 {
 			continue
 		}
 
 		payloadStr := result[1]
-		// Process webhook
-		go processWebhook(payloadStr, logger, rdb) // Spawn goroutine for each task to be concurrent
+		go processWebhook(payloadStr, logger, rdb)
 	}
 }
 
@@ -57,13 +52,11 @@ type WebhookPayload struct {
 
 func processWebhook(raw string, logger *logrus.Logger, rdb *redis.Client) {
 	var payload WebhookPayload
-	// Unmarshal payload
 	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
 		logger.Errorf("[ERROR] Invalid JSON payload: %v | Payload: %s", err, raw)
 		return
 	}
 
-	// Check if callback URL is empty
 	if payload.CallbackURL == "" {
 		logger.Errorf("[SKIP] No callback_url for Order: %s", payload.OrderID)
 		return
@@ -71,7 +64,6 @@ func processWebhook(raw string, logger *logrus.Logger, rdb *redis.Client) {
 
 	logger.Infof("[PROCESSING] Sending webhook for Order %s to %s", payload.OrderID, payload.CallbackURL)
 
-	// Prepare payload for merchant (remove sensitive internal stuff if any)
 	merchantBody := map[string]any{
 		"transaction_id": payload.TransactionID,
 		"order_id":       payload.OrderID,
@@ -83,12 +75,10 @@ func processWebhook(raw string, logger *logrus.Logger, rdb *redis.Client) {
 
 	jsonBody, _ := json.Marshal(merchantBody)
 
-	// HTTP Request with timeout
 	client := http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	// Send webhook
 	resp, err := client.Post(payload.CallbackURL, "application/json", bytes.NewBuffer(jsonBody))
 	if err != nil {
 		logger.Errorf("[FAILED] Order %s: %v", payload.OrderID, err)
@@ -97,34 +87,28 @@ func processWebhook(raw string, logger *logrus.Logger, rdb *redis.Client) {
 	}
 	defer resp.Body.Close()
 
-	// Check response
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		logger.Infof("[SUCCESS] Order %s: Merchant responded %d", payload.OrderID, resp.StatusCode)
 	} else {
 		logger.Errorf("[FAILED] Order %s: Merchant responded %d", payload.OrderID, resp.StatusCode)
-		// Retry
 		retry(payload, logger, rdb)
 	}
 }
 
 func retry(payload WebhookPayload, logger *logrus.Logger, rdb *redis.Client) {
 	maxRetry := 5
-	// Check if max retry reached
 	if payload.RetryCount >= maxRetry {
 		logger.Errorf("[GIVE UP] Max retry reached for Order %s", payload.OrderID)
 		return
 	}
 
-	// Increment retry count
 	payload.RetryCount++
 	newBody, _ := json.Marshal(payload)
 
-	// Wait time
 	waitTime := time.Duration(payload.RetryCount*5) * time.Second
 
 	logger.Warnf("[RETRY] Rescheduling Order %s in %v (Attempt %d/%d)", payload.OrderID, waitTime, payload.RetryCount, maxRetry)
 
-	// Reschedule
 	go func() {
 		time.Sleep(waitTime)
 		if err := rdb.RPush(context.Background(), "webhook_queue", newBody).Err(); err != nil {

@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Enums for MerchantStatus
 type MerchantStatus string
 
 const (
@@ -16,7 +15,6 @@ const (
 	MerchantStatusInactive  MerchantStatus = "INACTIVE"
 )
 
-// Entities for Merchant
 type Merchant struct {
 	ID          uuid.UUID      `json:"id"`
 	Name        string         `json:"name"`
@@ -30,7 +28,6 @@ type Merchant struct {
 	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
-// Interfaces for Repository
 type MerchantRepository interface {
 	Create(ctx context.Context, m *Merchant) (*Merchant, error)
 	Update(ctx context.Context, m *Merchant) error
@@ -39,7 +36,6 @@ type MerchantRepository interface {
 	RegenerateApiKey(ctx context.Context, id uuid.UUID, newApiKey string) error
 }
 
-// Interfaces for Usecase
 type MerchantUC interface {
 	Register(ctx context.Context, req *RegisterMerchantRequest) (*Merchant, error)
 	GetProfile(ctx context.Context, id uuid.UUID) (*Merchant, error)

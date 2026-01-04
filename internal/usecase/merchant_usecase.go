@@ -23,16 +23,13 @@ func NewMerchantUC(r domain.MerchantRepository, t time.Duration) domain.Merchant
 }
 
 func (u *merchantUC) ValidateApiKey(ctx context.Context, apiKey string) (*domain.Merchant, error) {
-	// hash api key
 	apiKeyHash := pkg.HashKey256(apiKey)
 
-	// find merchant by api key
 	merchant, err := u.merchantRepo.FindByApiKey(ctx, apiKeyHash)
 	if err != nil {
 		return nil, err
 	}
 
-	// check if merchant is active
 	if merchant.Status != domain.MerchantStatusActive {
 		return nil, errors.New("merchant is not active")
 	}
@@ -41,23 +38,18 @@ func (u *merchantUC) ValidateApiKey(ctx context.Context, apiKey string) (*domain
 }
 
 func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantRequest) (*domain.Merchant, error) {
-	// create context with timeout
 	ctx, cancel := context.WithTimeout(c, u.timeout)
 	defer cancel()
 
-	// generate new UUIDV7
 	id := pkg.GenerateUUIDV7()
 
-	// generate ApiKey
 	apiKey, err := pkg.GenerateApiKey("mch")
 	if err != nil {
 		return nil, err
 	}
 
-	// hash ApiKey
 	apiKeyHash := pkg.HashKey256(apiKey)
 
-	// create merchant entity
 	merchant := &domain.Merchant{
 		ID:          id,
 		Name:        req.Name,
@@ -69,20 +61,17 @@ func (u *merchantUC) Register(c context.Context, req *domain.RegisterMerchantReq
 		Balance:     0,
 	}
 
-	// save to repository
 	createdMerchant, err := u.merchantRepo.Create(ctx, merchant)
 	if err != nil {
 		return nil, err
 	}
 
-	// set merchant ApiKey for response
 	createdMerchant.ApiKey = apiKey
 
 	return createdMerchant, nil
 }
 
 func (u *merchantUC) GetProfile(ctx context.Context, id uuid.UUID) (*domain.Merchant, error) {
-	// find merchant by ID
 	merchant, err := u.merchantRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -91,13 +80,11 @@ func (u *merchantUC) GetProfile(ctx context.Context, id uuid.UUID) (*domain.Merc
 }
 
 func (u *merchantUC) UpdateProfile(ctx context.Context, id uuid.UUID, req *domain.UpdateMerchantRequest) (*domain.Merchant, error) {
-	// find merchant by ID
 	merchant, err := u.merchantRepo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// update fields
 	if req.Name != "" {
 		merchant.Name = req.Name
 	}
@@ -108,7 +95,6 @@ func (u *merchantUC) UpdateProfile(ctx context.Context, id uuid.UUID, req *domai
 
 	merchant.UpdatedAt = time.Now()
 
-	// save updates to repository
 	if err := u.merchantRepo.Update(ctx, merchant); err != nil {
 		return nil, err
 	}
@@ -117,16 +103,13 @@ func (u *merchantUC) UpdateProfile(ctx context.Context, id uuid.UUID, req *domai
 }
 
 func (u *merchantUC) RegenerateApiKey(ctx context.Context, id uuid.UUID) (string, error) {
-	// generate new ApiKey
 	newApiKey, err := pkg.GenerateApiKey("mch")
 	if err != nil {
 		return "", err
 	}
 
-	// hash new ApiKey
 	newApiKeyHash := pkg.HashKey256(newApiKey)
 
-	// update api key in repository
 	if err := u.merchantRepo.RegenerateApiKey(ctx, id, newApiKeyHash); err != nil {
 		return "", err
 	}

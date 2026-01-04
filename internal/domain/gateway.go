@@ -1,7 +1,7 @@
 package domain
 
 type PaymentGateway interface {
-	CreatePayment(tx *CreatePaymentRequest) (*PaymentResponse, error)
+	CreatePayment(req *CreatePaymentRequest) (*PaymentResponse, error)
 	CheckStatus(orderID string) (string, error)
 }
 
