@@ -122,10 +122,8 @@ func TestTransactionUsecase_CreateTransaction(t *testing.T) {
 			mockRepo := new(mocks.MockTransactionRepository)
 			mockGateway := new(mocks.MockPaymentGateway)
 
-			// Setup Behavior Mock sesuai test case
 			tt.mock(mockRepo, mockGateway)
 
-			// Init Usecase dengan timeout 2 detik
 			transactionUC := usecase.NewTransactionUC(mockRepo, mockGateway, time.Second*2)
 
 			ctx := context.Background()
