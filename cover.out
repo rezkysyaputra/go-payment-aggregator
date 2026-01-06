@@ -8,9 +8,9 @@ go-payment-aggregator/internal/usecase/merchant_usecase.go:37.2,37.22 1 0
 go-payment-aggregator/internal/usecase/merchant_usecase.go:40.113,62.16 8 1
 go-payment-aggregator/internal/usecase/merchant_usecase.go:62.16,64.3 1 1
 go-payment-aggregator/internal/usecase/merchant_usecase.go:66.2,68.29 2 1
-go-payment-aggregator/internal/usecase/merchant_usecase.go:71.94,73.16 2 0
-go-payment-aggregator/internal/usecase/merchant_usecase.go:73.16,75.3 1 0
-go-payment-aggregator/internal/usecase/merchant_usecase.go:76.2,76.22 1 0
+go-payment-aggregator/internal/usecase/merchant_usecase.go:71.94,73.16 2 1
+go-payment-aggregator/internal/usecase/merchant_usecase.go:73.16,75.3 1 1
+go-payment-aggregator/internal/usecase/merchant_usecase.go:76.2,76.22 1 1
 go-payment-aggregator/internal/usecase/merchant_usecase.go:79.132,81.16 2 0
 go-payment-aggregator/internal/usecase/merchant_usecase.go:81.16,83.3 1 0
 go-payment-aggregator/internal/usecase/merchant_usecase.go:85.2,85.20 1 0
