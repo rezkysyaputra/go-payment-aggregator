@@ -290,3 +290,52 @@ func TestMerchantUsecase_ValidateApiKey(t *testing.T) {
 		})
 	}
 }
+
+func TestMerchantUsecase_RegenerateApiKey(t *testing.T) {
+	merchantID := pkg.GenerateUUIDV7()
+
+	tests := []struct {
+		name    string
+		mock    func(repo *mocks.MockMerchantRepository)
+		wantErr bool
+	}{
+		{
+			name: "Success Regenerate API Key",
+			mock: func(repo *mocks.MockMerchantRepository) {
+				repo.On("RegenerateApiKey", mock.Anything, merchantID, mock.MatchedBy(func(apiKeyHash string) bool {
+					return len(apiKeyHash) == 64
+				})).Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Failed Regenerate API Key - Repository Error",
+			mock: func(repo *mocks.MockMerchantRepository) {
+				repo.On("RegenerateApiKey", mock.Anything, merchantID, mock.AnythingOfType("string")).Return(assert.AnError)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(mocks.MockMerchantRepository)
+
+			tt.mock(mockRepo)
+
+			merchantUC := usecase.NewMerchantUC(mockRepo, time.Second*2)
+
+			ctx := context.Background()
+			res, err := merchantUC.RegenerateApiKey(ctx, merchantID)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Empty(t, res)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, res)
+				assert.NotEmpty(t, res)
+			}
+		})
+	}
+}
