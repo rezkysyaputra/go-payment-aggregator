@@ -1,10 +1,10 @@
 mode: set
 go-payment-aggregator/internal/usecase/merchant_usecase.go:18.84,23.2 1 1
-go-payment-aggregator/internal/usecase/merchant_usecase.go:25.99,29.16 3 0
-go-payment-aggregator/internal/usecase/merchant_usecase.go:29.16,31.3 1 0
-go-payment-aggregator/internal/usecase/merchant_usecase.go:33.2,33.52 1 0
-go-payment-aggregator/internal/usecase/merchant_usecase.go:33.52,35.3 1 0
-go-payment-aggregator/internal/usecase/merchant_usecase.go:37.2,37.22 1 0
+go-payment-aggregator/internal/usecase/merchant_usecase.go:25.99,29.16 3 1
+go-payment-aggregator/internal/usecase/merchant_usecase.go:29.16,31.3 1 1
+go-payment-aggregator/internal/usecase/merchant_usecase.go:33.2,33.52 1 1
+go-payment-aggregator/internal/usecase/merchant_usecase.go:33.52,35.3 1 1
+go-payment-aggregator/internal/usecase/merchant_usecase.go:37.2,37.22 1 1
 go-payment-aggregator/internal/usecase/merchant_usecase.go:40.113,62.16 8 1
 go-payment-aggregator/internal/usecase/merchant_usecase.go:62.16,64.3 1 1
 go-payment-aggregator/internal/usecase/merchant_usecase.go:66.2,68.29 2 1
