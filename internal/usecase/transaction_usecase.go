@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"go-payment-aggregator/internal/domain"
 	"go-payment-aggregator/internal/pkg"
 	"time"
@@ -11,14 +12,14 @@ import (
 
 type TransactionUC struct {
 	transactionRepo domain.TransactionRepository
-	gateway         domain.PaymentGateway
+	gateways        map[string]domain.PaymentGateway
 	timeout         time.Duration
 }
 
-func NewTransactionUC(r domain.TransactionRepository, g domain.PaymentGateway, t time.Duration) domain.TransactionUC {
+func NewTransactionUC(r domain.TransactionRepository, g map[string]domain.PaymentGateway, t time.Duration) domain.TransactionUC {
 	return &TransactionUC{
 		transactionRepo: r,
-		gateway:         g,
+		gateways:        g,
 		timeout:         t,
 	}
 }
@@ -57,7 +58,12 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		Items:         req.Items,
 	}
 
-	paymentResponse, err := u.gateway.CreatePayment(paymentRequest)
+	gateway, exists := u.gateways[req.Provider]
+	if !exists {
+		return nil, errors.New("payment provider not supported")
+	}
+
+	paymentResponse, err := gateway.CreatePayment(paymentRequest)
 	if err != nil {
 		return nil, err
 	}

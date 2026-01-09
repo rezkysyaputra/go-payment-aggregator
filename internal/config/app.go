@@ -4,6 +4,7 @@ import (
 	"go-payment-aggregator/internal/delivery/http/handler"
 	"go-payment-aggregator/internal/delivery/http/middleware"
 	"go-payment-aggregator/internal/delivery/http/route"
+	"go-payment-aggregator/internal/domain"
 	"go-payment-aggregator/internal/gateway"
 	"go-payment-aggregator/internal/repository/postgres"
 	"go-payment-aggregator/internal/usecase"
@@ -42,11 +43,15 @@ func Bootstrap(b *BootstrapConfig) {
 
 	midtransGateway := gateway.NewMidtransGateway(mtConfig)
 
+	gateways := map[string]domain.PaymentGateway{
+		"midtrans": midtransGateway,
+	}
+
 	merchantRepository := postgres.NewMerchantRepository(b.DB)
 	transactionRepository := postgres.NewTransactionRepository(b.DB)
 
 	merchantUsecase := usecase.NewMerchantUC(merchantRepository, time.Second*2)
-	transactionUsecase := usecase.NewTransactionUC(transactionRepository, midtransGateway, time.Second*time.Duration(b.Config.GetInt64("CONTEXT_TIMEOUT")))
+	transactionUsecase := usecase.NewTransactionUC(transactionRepository, gateways, time.Second*time.Duration(b.Config.GetInt64("CONTEXT_TIMEOUT")))
 
 	merchantHandler := handler.NewMerchantHandler(merchantUsecase)
 	transactionHandler := handler.NewTransactionHandler(transactionUsecase)

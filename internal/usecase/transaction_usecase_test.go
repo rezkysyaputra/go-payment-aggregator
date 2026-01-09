@@ -46,6 +46,7 @@ func TestTransactionUsecase_CreateTransaction(t *testing.T) {
 		OrderID:       reqUC.OrderID,
 		Amount:        reqUC.Amount,
 		PaymentMethod: reqUC.PaymentMethod,
+		Provider:      "midtrans",
 		Currency:      reqUC.Currency,
 		Status:        domain.TransactionStatusPending,
 	}
@@ -66,6 +67,7 @@ func TestTransactionUsecase_CreateTransaction(t *testing.T) {
 	tests := []struct {
 		name    string
 		mock    func(repo *mocks.MockTransactionRepository, gateway *mocks.MockPaymentGateway)
+		request *domain.CreateTransactionRequest
 		wantErr bool
 	}{
 		{
@@ -115,6 +117,28 @@ func TestTransactionUsecase_CreateTransaction(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Failed  Unsupported Provider",
+			mock: func(repo *mocks.MockTransactionRepository, gateway *mocks.MockPaymentGateway) {
+				repo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Transaction")).
+					Return(mockTransaction, nil)
+			},
+			request: &domain.CreateTransactionRequest{
+				OrderID:       "ORDER-TEST-456",
+				Amount:        50000,
+				Currency:      "IDR",
+				Provider:      "invalid-provider",
+				PaymentMethod: "bank_transfer",
+				Customer: domain.Customer{
+					Name:  "test user",
+					Email: "test@example.com",
+				},
+				Items: []domain.Item{
+					{Name: "Item Test", Quantity: 1, Price: 50000},
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -124,10 +148,20 @@ func TestTransactionUsecase_CreateTransaction(t *testing.T) {
 
 			tt.mock(mockRepo, mockGateway)
 
-			transactionUC := usecase.NewTransactionUC(mockRepo, mockGateway, time.Second*2)
+			gateways := map[string]domain.PaymentGateway{
+				"midtrans": mockGateway,
+			}
+
+			transactionUC := usecase.NewTransactionUC(mockRepo, gateways, time.Second*2)
 
 			ctx := context.Background()
-			res, err := transactionUC.Create(ctx, merchantID, reqUC)
+
+			request := reqUC
+			if tt.request != nil {
+				request = tt.request
+			}
+
+			res, err := transactionUC.Create(ctx, merchantID, request)
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -142,6 +176,7 @@ func TestTransactionUsecase_CreateTransaction(t *testing.T) {
 			mockGateway.AssertExpectations(t)
 		})
 	}
+
 }
 
 func TestTransactionUsecase_GetTransaction(t *testing.T) {
@@ -183,7 +218,11 @@ func TestTransactionUsecase_GetTransaction(t *testing.T) {
 
 			tt.mock(mockRepo)
 
-			transactionUC := usecase.NewTransactionUC(mockRepo, mockGateway, time.Second*2)
+			gateways := map[string]domain.PaymentGateway{
+				"midtrans": mockGateway,
+			}
+
+			transactionUC := usecase.NewTransactionUC(mockRepo, gateways, time.Second*2)
 
 			ctx := context.Background()
 			res, err := transactionUC.Get(ctx, transactionID)
@@ -261,7 +300,11 @@ func TestTransactionUsecase_HandleNotification(t *testing.T) {
 
 			tt.mock(mockRepo)
 
-			transactionUC := usecase.NewTransactionUC(mockRepo, mockGateway, time.Second*2)
+			gateways := map[string]domain.PaymentGateway{
+				"midtrans": mockGateway,
+			}
+
+			transactionUC := usecase.NewTransactionUC(mockRepo, gateways, time.Second*2)
 
 			ctx := context.Background()
 			err := transactionUC.HandleNotification(ctx, req)
