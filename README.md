@@ -25,13 +25,16 @@ A robust, enterprise-grade Payment Aggregator service designed to unify multiple
 
 ## 🚀 Features
 
-- **Multi-Gateway Support**: Seamless integration with **Midtrans**, **Xendit**, and **Stripe**, plus a **Mock** provider for local development and testing.
+- **Multi-Gateway Support**: Seamless integration with **Midtrans**, **Xendit**, and **Stripe** (planned).
 - **Unified API Interface**: A single `CreateTransaction` endpoint intelligently routes requests to the appropriate provider.
-- **Resilient Webhook Handling**: Standardized, secure webhook processing pipeline for all providers.
+- **Standardized Payment Methods**: Gateway-agnostic payment method format (`credit_card`, `bank_transfer`, `e_wallet`, `qris`).
+- **Dynamic Gateway Selection**: Merchants can choose their preferred payment gateway per transaction.
+- **Transaction Status Tracking**: Real-time transaction status checking across all gateways.
+- **Resilient Webhook Handling**: Standardized webhook processing for payment notifications.
 - **Merchant Callbacks**: Automatic notification system that relays payment status changes back to the merchant's registered `callback_url`.
-- **Idempotency & Safety**: Built-in duplicate order protection to prevent double-spending.
 - **Containerized**: Fully dockerized environment with PostgreSQL and Redis support for easy deployment.
 - **Observability**: Structured logging with Logrus.
+- **High Test Coverage**: 100% unit test coverage for business logic.
 
 ## 🏗 Architecture
 
@@ -45,8 +48,7 @@ graph TD
     Usecase -->|Request Payment| Gateway["Payment Gateway Interface"]
     Gateway -->|Impl| Midtrans["Midtrans Adapter"]
     Gateway -->|Impl| Xendit["Xendit Adapter"]
-    Gateway -->|Impl| Stripe["Stripe Adapter"]
-    Gateway -->|Impl| Mock["Mock Adapter"]
+    Gateway -->|Impl| Stripe["Stripe Adapter (Planned)"]
 ```
 
 ## 🛠 Tech Stack
@@ -91,9 +93,12 @@ Edit `.env` with your credentials.
 | `APP_NAME` | Application Name | `go-payment-aggregator` |
 | `SERVER_PORT` | HTTP Port | `8080` |
 | `DATABASE_*` | Database connection details | - |
+| `REDIS_*` | Redis connection details | - |
 | `MIDTRANS_SERVER_KEY` | Midtrans Server Key | - |
-| `XENDIT_API_KEY` | Xendit Secret API Key | - |
-| `STRIPE_SECRET_KEY` | Stripe Secret Key | - |
+| `MIDTRANS_ENVIRONMENT` | Midtrans Environment (`sandbox` or `production`) | `sandbox` |
+| `XENDIT_API_KEY` | Xendit API Key | - |
+| `STRIPE_SECRET_KEY` | Stripe Secret Key (optional, for future use) | - |
+| `CONTEXT_TIMEOUT` | Request timeout in seconds | `2` |
 
 ## 🚀 Usage
 
@@ -133,12 +138,69 @@ The API follows RESTful conventions. A full OpenAPI specification is provided in
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `POST` | `/v1/merchant/register` | Register a new merchant to get an API Key. |
-| `POST` | `/v1/transaction` | Create a new transaction (supports `midtrans`, `xendit`, `stripe`, `mock`). |
-| `GET` | `/v1/transaction/{id}` | Retrieve transaction status by System ID. |
-| `POST` | `/v1/webhook/midtrans` | Webhook endpoint for Midtrans. |
-| `POST` | `/v1/webhook/xendit` | Webhook endpoint for Xendit. |
-| `POST` | `/v1/webhook/stripe` | Webhook endpoint for Stripe. |
+| `POST` | `/api/v1/merchants` | Register a new merchant to get an API Key. |
+| `GET` | `/api/v1/merchants/profile` | Get merchant profile (requires authentication). |
+| `PUT` | `/api/v1/merchants/profile` | Update merchant profile. |
+| `POST` | `/api/v1/merchants/api-key/regenerate` | Regenerate merchant API Key. |
+| `POST` | `/api/v1/transactions` | Create a new transaction (supports `midtrans`, `xendit`). |
+| `GET` | `/api/v1/transactions/{id}` | Retrieve transaction status by System ID. |
+| `POST` | `/api/v1/webhooks/midtrans` | Webhook endpoint for Midtrans. |
+
+### Standardized Payment Methods
+
+The API uses gateway-agnostic payment method identifiers:
+
+| Payment Method | Description | Supported Gateways |
+| :--- | :--- | :--- |
+| `credit_card` | Credit/Debit Card | Midtrans, Xendit, Stripe (planned) |
+| `bank_transfer` | Bank Transfer / Virtual Account | Midtrans, Xendit |
+| `e_wallet` | E-Wallet (GoPay, OVO, DANA, ShopeePay) | Midtrans, Xendit |
+| `qris` | QR Code Payment | Midtrans, Xendit |
+
+### Example: Create Transaction
+
+```json
+POST /api/v1/transactions
+Content-Type: application/json
+X-API-Key: mch_your_api_key_here
+
+{
+  "order_id": "ORDER-123456",
+  "amount": 100000,
+  "currency": "IDR",
+  "provider": "xendit",
+  "payment_method": "bank_transfer",
+  "customer": {
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "items": [
+    {
+      "name": "Product A",
+      "quantity": 2,
+      "price": 50000
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "code": 201,
+  "status": "success",
+  "message": "Transaction created successfully",
+  "data": {
+    "id": "019b9836-deb7-7441-aaaf-ef51e4d91961",
+    "order_id": "ORDER-123456",
+    "amount": 100000,
+    "currency": "IDR",
+    "status": "PENDING",
+    "payment_url": "https://checkout.xendit.co/web/...",
+    "external_id": "62fe7ac7ae8faa001e3a7f01"
+  }
+}
+```
 
 ## 🧪 Testing
 
