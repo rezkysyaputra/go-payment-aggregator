@@ -22,7 +22,7 @@ func main() {
 		Redis:    redis,
 	})
 
-	port := viperConfig.GetInt("APP_PORT")
+	port := viperConfig.GetInt("SERVER_PORT")
 	err := app.Run(fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to start server: %v", err)
