@@ -32,6 +32,29 @@ func NewMidtransGateway(cfg MidtransConfig) domain.PaymentGateway {
 	}
 }
 
+func mapPaymentMethodToMidtrans(method string) []snap.SnapPaymentType {
+	mapping := map[string][]snap.SnapPaymentType{
+		"credit_card": {
+			snap.PaymentTypeCreditCard,
+		},
+		"bank_transfer": {
+			snap.PaymentTypeBankTransfer,
+		},
+		"e_wallet": {
+			snap.PaymentTypeGopay,
+			snap.PaymentTypeShopeepay,
+		},
+		"qris": {
+			snap.PaymentTypeGopay,
+		},
+	}
+
+	if methods, ok := mapping[method]; ok {
+		return methods
+	}
+	return []snap.SnapPaymentType{}
+}
+
 func (g *MidtransGateway) CreatePayment(req *domain.CreatePaymentRequest) (*domain.PaymentResponse, error) {
 	snapReq := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
@@ -44,9 +67,7 @@ func (g *MidtransGateway) CreatePayment(req *domain.CreatePaymentRequest) (*doma
 			Email: req.Customer.Email,
 		},
 
-		EnabledPayments: []snap.SnapPaymentType{
-			snap.SnapPaymentType(req.PaymentMethod),
-		},
+		EnabledPayments: mapPaymentMethodToMidtrans(req.PaymentMethod),
 
 		Items: func() *[]midtrans.ItemDetails {
 			var items []midtrans.ItemDetails
@@ -62,7 +83,7 @@ func (g *MidtransGateway) CreatePayment(req *domain.CreatePaymentRequest) (*doma
 
 		Expiry: &snap.ExpiryDetails{
 			Unit:     "minute",
-			Duration: req.ExpiryMinutes,
+			Duration: int64(req.ExpiryMinutes),
 		},
 	}
 
@@ -83,7 +104,7 @@ func (g *MidtransGateway) CheckStatus(orderID string) (string, error) {
 		return "", err
 	}
 
-	finalStatus := pkg.MapMidtransStatus(res.TransactionStatus, res.FraudStatus)
+	status := pkg.MapMidtransStatus(res.TransactionStatus, res.FraudStatus)
 
-	return finalStatus, nil
+	return status, nil
 }
