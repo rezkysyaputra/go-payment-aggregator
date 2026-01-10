@@ -36,15 +36,21 @@ func Bootstrap(b *BootstrapConfig) {
 		midtransEnv = midtrans.Sandbox
 	}
 
-	mtConfig := gateway.MidtransConfig{
+	mConfig := gateway.MidtransConfig{
 		ServerKey: b.Config.GetString("MIDTRANS_SERVER_KEY"),
 		Env:       midtransEnv,
 	}
 
-	midtransGateway := gateway.NewMidtransGateway(mtConfig)
+	xConfig := gateway.XenditConfig{
+		ApiKey: b.Config.GetString("XENDIT_API_KEY"),
+	}
+
+	midtransGateway := gateway.NewMidtransGateway(mConfig)
+	xenditGateway := gateway.NewXenditGateway(xConfig)
 
 	gateways := map[string]domain.PaymentGateway{
 		"midtrans": midtransGateway,
+		"xendit":   xenditGateway,
 	}
 
 	merchantRepository := postgres.NewMerchantRepository(b.DB)
