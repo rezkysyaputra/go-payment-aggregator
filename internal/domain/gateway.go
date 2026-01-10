@@ -14,7 +14,8 @@ type CreatePaymentRequest struct {
 	OrderID       string   `json:"order_id"`
 	Amount        int64    `json:"amount"`
 	PaymentMethod string   `json:"payment_method"`
-	ExpiryMinutes int64    `json:"expiry_minutes"`
+	Currency      string   `json:"currency"`
+	ExpiryMinutes int32    `json:"expiry_minutes"`
 	Customer      Customer `json:"customer"`
 	Items         []Item   `json:"items"`
 }
