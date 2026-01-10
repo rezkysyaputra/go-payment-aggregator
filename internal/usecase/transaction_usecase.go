@@ -30,7 +30,7 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 
 	id := pkg.GenerateUUIDV7()
 
-	expiryDuration := time.Minute * 2
+	expiryDuration := 2 * time.Minute
 
 	transaction := &domain.Transaction{
 		ID:            id,
@@ -42,6 +42,8 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		Status:        domain.TransactionStatusPending,
 		PaymentMethod: req.PaymentMethod,
 		ExpiredAt:     time.Now().Add(expiryDuration),
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	createdTransaction, err := u.transactionRepo.Create(ctx, transaction)
@@ -53,7 +55,8 @@ func (u *TransactionUC) Create(ctx context.Context, merchantID uuid.UUID, req *d
 		OrderID:       createdTransaction.OrderID,
 		Amount:        createdTransaction.Amount,
 		PaymentMethod: createdTransaction.PaymentMethod,
-		ExpiryMinutes: int64(time.Until(transaction.ExpiredAt).Minutes()),
+		Currency:      createdTransaction.Currency,
+		ExpiryMinutes: int32(expiryDuration.Minutes()),
 		Customer:      req.Customer,
 		Items:         req.Items,
 	}
