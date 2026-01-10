@@ -20,7 +20,7 @@ func MapMidtransStatus(midtransStatus, fraudStatus string) string {
 	}
 }
 
-func VerifySignature(orderID, statusCode, grossAmount, serverKey, signatureKey string) bool {
+func VerifySignatureMidtrans(orderID, statusCode, grossAmount, serverKey, signatureKey string) bool {
 	signatureString := orderID + statusCode + grossAmount + serverKey
 	expectedSignature := HashKey512(signatureString)
 
